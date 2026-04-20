@@ -1,0 +1,12 @@
+{
+  "date": "2026-04-19",
+  "theme": "urban_detachment_day",
+  "outfit_id": "urban_coat_001",
+  "outfit_description": "dark tailored overcoat, black inner layers, structured minimal styling, clean lines, subdued materials, no bright colors",
+  "primary_environment": "urban_exterior",
+  "allowed_environments": [
+    "urban_exterior",
+    "isolated_cafe",
+    "surveillance_room"
+  ]
+}
