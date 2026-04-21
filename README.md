@@ -10,23 +10,51 @@ Rather than producing random content, Ezra operates as a structured system—tra
 
 Ezra Nex operates through a multi-agent pipeline where each component is responsible for a specific stage of content generation.
 
-1. Core Agent  
-   Generates the primary signal (intent, tone, and direction) based on system state, memory, and behavioral rules.
+## Ezra Nex System Workflow
 
-2. Daily Visual Manager  
-   Establishes daily continuity by selecting and locking outfit, theme, and environment constraints.
+```text
+GitHub
+  ↓
+Railway deploys latest code
+  ↓
+Railway Cron triggers run_agent_auto.py
+  ↓
+run_agent_auto.py checks:
+  - time window
+  - duplicate posts
+  - lock file
+  ↓
+Daily Visual Manager
+  - chooses or keeps daily outfit
+  - chooses allowed environments
+  ↓
+Core Agent
+  - chooses post mode
+  - chooses devlog state
+  - chooses content type
+  - generates Ezra signal
+  ↓
+Visual Agent
+  - turns signal into image prompt
+  - applies personality, environment, outfit, and content rules
+  ↓
+Renderer
+  - generates image with Gemini
+  - uses Ezra reference image unless system_visual
+  - saves final 4:5 image
+  ↓
+Caption Agent
+  - writes final caption
+  - adds #devlog for devlog posts
+  ↓
+Webhook Delivery
+  - sends image, caption, and metadata to Make
+  ↓
+Make
+  - routes post to social platforms
+```
 
-3. Visual Agent  
-   Translates the core signal into a structured image prompt while enforcing identity consistency and environmental rules.
 
-4. Renderer  
-   Generates the final image using an external model (e.g., Gemini), maintaining a consistent visual identity.
-
-5. Caption Agent  
-   Produces a controlled caption based on signal context, system state, and predefined tone constraints.
-
-6. Output + Reset  
-   The system outputs the final image and caption, updates internal state, and prepares for the next cycle.
 
 ---
 
