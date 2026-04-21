@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import base64
+import json
 import time
 from datetime import datetime
 from io import BytesIO
@@ -20,6 +21,7 @@ ENV_FILE = ROOT_DIR / ".env"
 PROMPT_FILE = ROOT_DIR / "visual_prompt.txt"
 IMAGES_DIR = ROOT_DIR / "Images"
 PROFILE_IMAGE = ROOT_DIR / "Ezra Nex - Character Profile Sheet.png"
+RENDER_MODE_FILE = ROOT_DIR / "render_mode.json"
 
 MODEL_NAME = "gemini-2.5-flash-image"
 
@@ -40,6 +42,18 @@ def get_api_key() -> str:
         )
 
     return api_key
+
+
+def load_render_mode() -> dict:
+    if not RENDER_MODE_FILE.exists():
+        return {}
+
+    try:
+        data = json.loads(RENDER_MODE_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+    return data if isinstance(data, dict) else {}
 
 
 # =========================
@@ -238,21 +252,35 @@ def main() -> int:
     print("-----------------------")
 
     client = genai.Client(api_key=api_key)
+    render_mode = load_render_mode()
+    content_type = str(render_mode.get("content_type", "") or "").strip().lower()
+    is_system_visual = content_type == "system_visual"
 
-    base_instruction = (
-        "The provided image is the canonical identity reference for Ezra Nex. "
-        "Maintain the same person, facial structure, hairstyle, and identity across all generations. "
-        "You may change outfit, pose, camera angle, lighting, and environment, "
-        "but the identity must remain consistent with the reference image. "
-        "Ezra's visual world must remain cold, controlled, desaturated, and emotionally distant. "
-        "If outdoors, conditions should feel overcast, rainy, or post-rain rather than bright or cheerful. "
-        "If in a cafe, the setting should feel isolated, subdued, and introspective rather than social or lively. "
-        "Do not copy the reference image exactly. Generate a new scene with the same individual."
-    )
+    if is_system_visual:
+        base_instruction = (
+            "Generate a NEX//THR system visual only. "
+            "Do not include Ezra, a face, body, hands, silhouette, or any human figure. "
+            "The image should be a graphical operating-system artifact: interface fragments, logs, panels, "
+            "state maps, node graphs, process flows, or diagnostic structures. "
+            "Keep it cold, controlled, desaturated, imperfect, and not product-marketing polished."
+        )
+    else:
+        base_instruction = (
+            "The provided image is the canonical identity reference for Ezra Nex. "
+            "Maintain the same person, facial structure, hairstyle, and identity across all generations. "
+            "You may change outfit, pose, camera angle, lighting, and environment, "
+            "but the identity must remain consistent with the reference image. "
+            "Ezra's visual world must remain cold, controlled, desaturated, and emotionally distant. "
+            "If outdoors, conditions should feel overcast, rainy, or post-rain rather than bright or cheerful. "
+            "If in a cafe, the setting should feel isolated, subdued, and introspective rather than social or lively. "
+            "Do not copy the reference image exactly. Generate a new scene with the same individual."
+        )
 
     contents: list[types.Part | str] = [base_instruction]
 
-    if PROFILE_IMAGE.exists():
+    if is_system_visual:
+        print("[RENDERER]: System visual mode active. Skipping character reference image.")
+    elif PROFILE_IMAGE.exists():
         print(f"[RENDERER]: Using character reference image: {PROFILE_IMAGE.name}")
         contents.append(
             types.Part.from_bytes(
@@ -265,7 +293,10 @@ def main() -> int:
 
     contents.append(prompt)
 
-    print("[RENDERER]: Sending prompt + reference to Gemini image model...")
+    if is_system_visual:
+        print("[RENDERER]: Sending system visual prompt to Gemini image model...")
+    else:
+        print("[RENDERER]: Sending prompt + reference to Gemini image model...")
 
     response = generate_content_with_retry(client, contents=contents)
 

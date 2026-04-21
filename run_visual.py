@@ -28,6 +28,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 DAILY_VISUAL_STATE_FILE = ROOT_DIR / "daily_visual_state.json"
 CREATIVE_OVERRIDE_FILE = ROOT_DIR / "daily_creative_override.json"
 RUN_HISTORY_FILE = ROOT_DIR / "run_history.json"
+RENDER_MODE_FILE = ROOT_DIR / "render_mode.json"
 
 
 def load_json(path: Path, default):
@@ -122,6 +123,8 @@ def choose_environment(daily_state: dict) -> str:
 def build_context_block(signal_context: dict) -> str:
     post_mode = str(signal_context.get("post_mode", "") or "").strip()
     devlog_state = str(signal_context.get("devlog_state", "") or "").strip()
+    content_type = str(signal_context.get("content_type", "") or "").strip()
+    tension_stage = str(signal_context.get("tension_stage", "") or "").strip()
     theme = str(signal_context.get("theme", "") or "").strip()
     intent = str(signal_context.get("intent", "") or "").strip()
 
@@ -132,6 +135,12 @@ def build_context_block(signal_context: dict) -> str:
 
     if devlog_state:
         lines.append(f"Devlog State: {devlog_state}")
+
+    if content_type:
+        lines.append(f"Content Type: {content_type}")
+
+    if tension_stage:
+        lines.append(f"System Tension Stage: {tension_stage}")
 
     if theme:
         lines.append(f"Theme: {theme}")
@@ -148,6 +157,38 @@ def build_context_block(signal_context: dict) -> str:
 def build_mode_guidance(signal_context: dict) -> str:
     post_mode = str(signal_context.get("post_mode", "") or "").strip().lower()
     devlog_state = str(signal_context.get("devlog_state", "") or "").strip().lower()
+    content_type = str(signal_context.get("content_type", "") or "").strip().lower()
+
+    if content_type == "system_visual":
+        return "\n".join(
+            [
+                "This is a SYSTEM VISUAL / OS VISUAL.",
+                "The image must be UI-only or graphical.",
+                "Do not include Ezra, a face, a body, hands, silhouette, or any human subject.",
+                "Show NEX//THR through interface fragments, logs, state maps, diagnostic panels, node graphs, process flows, or partial system architecture.",
+                "The design should feel leaked, controlled, incomplete, desaturated, and not product-marketing polished.",
+                "Use blue-gray-black tones, slight imperfect alignment, partial readability, and subtle system tension.",
+            ]
+        )
+
+    if content_type == "hybrid":
+        return "\n".join(
+            [
+                "This is a HYBRID visual.",
+                "Ezra should be present, but NEX//THR system elements must also be visible.",
+                "Use screens, reflections, interface fragments, diagnostic logs, or subtle panels as secondary system evidence.",
+                "Do not make the system elements flashy, magical, or product-like.",
+            ]
+        )
+
+    if content_type == "silent":
+        return "\n".join(
+            [
+                "This is a SILENT / NEAR-SILENT visual.",
+                "The composition should be controlled, minimal, and unresolved.",
+                "Reduce action, avoid explanation, and let environment behavior carry the tension.",
+            ]
+        )
 
     if post_mode == "devlog":
         guidance = [
@@ -189,37 +230,27 @@ Manual Visual Override:
 """.rstrip()
 
 
-def build_user_prompt(
-    state_text: str,
-    memory_text: str,
-    personality_text: str,
-    daily_state: dict,
-    signal_context: dict,
-) -> str:
-    signal_id = extract_signal_id(state_text)
-    selected_environment = choose_environment(daily_state)
+def build_hard_requirements(signal_context: dict) -> str:
+    content_type = str(signal_context.get("content_type", "") or "").strip().lower()
 
-    theme = daily_state.get("theme", "UNKNOWN_THEME")
-    outfit_id = daily_state.get("outfit_id", "UNKNOWN_OUTFIT")
-    outfit_description = daily_state.get("outfit_description", "")
-    primary_environment = daily_state.get("primary_environment", "")
-    allowed_environments = daily_state.get("allowed_environments", [])
+    if content_type == "system_visual":
+        return """
+Hard requirements:
+- vertical composition
+- 4:5 aspect ratio
+- graphical OS/interface visual
+- no human subject
+- no Ezra likeness
+- no face, body, hands, silhouette, or person
+- NEX//THR system interface fragments, logs, panels, state maps, node graphs, or process flows
+- desaturated blue-gray-black palette
+- subtle imperfect alignment
+- not polished product marketing
+- not a clean commercial UI mockup
+- avoid bright colors unless explicitly forced by the override
+""".strip()
 
-    allowed_environments_text = ", ".join(allowed_environments) if allowed_environments else "system_core"
-    visual_override = load_visual_override()
-    signal_context_block = build_context_block(signal_context)
-    mode_guidance = build_mode_guidance(signal_context)
-    override_block = build_override_block(visual_override)
-
-    return f"""
-You are executing the Ezra Nex Visual Agent in a headless automation pipeline.
-
-Your job:
-- Read the current state, memory, and signal context.
-- Convert Ezra's current signal into ONE final image prompt paragraph only.
-- Output ONLY the final image prompt paragraph.
-- No labels. No bullet points. No commentary.
-
+    return """
 Hard requirements:
 - vertical composition
 - 4:5 aspect ratio
@@ -232,6 +263,53 @@ Hard requirements:
 - preserve daily outfit continuity
 - preserve daily environmental continuity
 - avoid bright colors unless explicitly forced by the override
+""".strip()
+
+
+def write_render_mode(signal_id: str, signal_context: dict) -> None:
+    payload = {
+        "signal_id": signal_id,
+        "content_type": str(signal_context.get("content_type", "") or ""),
+        "post_mode": str(signal_context.get("post_mode", "") or ""),
+        "devlog_state": str(signal_context.get("devlog_state", "") or ""),
+    }
+    write_text(RENDER_MODE_FILE, json.dumps(payload, indent=2) + "\n")
+
+
+def build_user_prompt(
+    state_text: str,
+    memory_text: str,
+    personality_text: str,
+    daily_state: dict,
+    signal_context: dict,
+) -> str:
+    signal_id = extract_signal_id(state_text)
+    content_type = str(signal_context.get("content_type", "") or "").strip().lower()
+    selected_environment = "system_visual" if content_type == "system_visual" else choose_environment(daily_state)
+
+    theme = daily_state.get("theme", "UNKNOWN_THEME")
+    outfit_id = daily_state.get("outfit_id", "UNKNOWN_OUTFIT")
+    outfit_description = daily_state.get("outfit_description", "")
+    primary_environment = daily_state.get("primary_environment", "")
+    allowed_environments = daily_state.get("allowed_environments", [])
+
+    allowed_environments_text = ", ".join(allowed_environments) if allowed_environments else "system_core"
+    visual_override = load_visual_override()
+    signal_context_block = build_context_block(signal_context)
+    mode_guidance = build_mode_guidance(signal_context)
+    override_block = build_override_block(visual_override)
+    hard_requirements = build_hard_requirements(signal_context)
+
+    return f"""
+You are executing the Ezra Nex Visual Agent in a headless automation pipeline.
+
+Your job:
+- Read the current state, memory, and signal context.
+- Convert Ezra's current signal into ONE final image prompt paragraph only.
+- Output ONLY the final image prompt paragraph.
+- No labels. No bullet points. No commentary.
+
+{hard_requirements}
 
 Daily visual continuity:
 - Theme: {theme}
@@ -242,6 +320,7 @@ Daily visual continuity:
 - Selected Environment For This Post: {selected_environment}
 
 Rules for outfit continuity:
+- These rules do not apply to system_visual posts where Ezra is not present.
 - Ezra must retain the same outfit identity throughout the day
 - minor pose-related garment changes are allowed
 - coat open or closed is allowed
@@ -251,7 +330,8 @@ Rules for outfit continuity:
 
 Rules for environment:
 - use the selected environment for this post
-- do not invent an environment outside the allowed list
+- do not invent an environment outside the allowed list unless the content type is system_visual
+- if selected environment is system_visual, create a UI-only NEX//THR graphical system environment
 - if selected environment is urban_exterior, it must feel rainy, overcast, post-rain, or muted
 - if selected environment is isolated_cafe, Ezra must feel isolated and not socially engaged
 - if selected environment is system_core, the environment should feel controlled, technical, and grounded
@@ -312,6 +392,7 @@ def main() -> int:
     ).strip()
 
     write_text(VISUAL_PROMPT_FILE, visual_prompt + "\n")
+    write_render_mode(signal_id, signal_context)
 
     state_text = replace_field(state_text, "Current State", "PENDING_CAPTION")
     state_text = replace_field(state_text, "Last Update", timestamp_full())

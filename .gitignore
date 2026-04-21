@@ -3,6 +3,7 @@ __pycache__/
 .env
 ezra_auto.lock
 render_debug.json
+render_mode.json
 staged_prompt.txt
 visual_prompt.txt
 final_caption.txt

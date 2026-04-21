@@ -74,6 +74,8 @@ def get_signal_context(signal_id: str) -> dict:
 def build_context_block(signal_context: dict) -> str:
     post_mode = str(signal_context.get("post_mode", "") or "").strip()
     devlog_state = str(signal_context.get("devlog_state", "") or "").strip()
+    content_type = str(signal_context.get("content_type", "") or "").strip()
+    tension_stage = str(signal_context.get("tension_stage", "") or "").strip()
     theme = str(signal_context.get("theme", "") or "").strip()
     intent = str(signal_context.get("intent", "") or "").strip()
 
@@ -83,6 +85,10 @@ def build_context_block(signal_context: dict) -> str:
         lines.append(f"Post Mode: {post_mode}")
     if devlog_state:
         lines.append(f"Devlog State: {devlog_state}")
+    if content_type:
+        lines.append(f"Content Type: {content_type}")
+    if tension_stage:
+        lines.append(f"System Tension Stage: {tension_stage}")
     if theme:
         lines.append(f"Theme: {theme}")
     if intent:
@@ -97,6 +103,37 @@ def build_context_block(signal_context: dict) -> str:
 def build_mode_guidance(signal_context: dict) -> str:
     post_mode = str(signal_context.get("post_mode", "") or "").strip().lower()
     devlog_state = str(signal_context.get("devlog_state", "") or "").strip().lower()
+    content_type = str(signal_context.get("content_type", "") or "").strip().lower()
+
+    if content_type == "system_visual":
+        return "\n".join(
+            [
+                "This is a SYSTEM VISUAL / OS VISUAL caption.",
+                "Use a Minimal Statement, System Reflection, or near-silent caption.",
+                "Do not describe the image as a UI screenshot.",
+                "Do not explain NEX//THR.",
+                "Keep the caption cold, technical, brief, and unresolved.",
+            ]
+        )
+
+    if content_type == "hybrid":
+        return "\n".join(
+            [
+                "This is a HYBRID caption.",
+                "Connect Ezra's presence to NEX//THR indirectly.",
+                "Use a Compressed Build Note or Minimal Statement.",
+                "Do not overexplain the system elements.",
+            ]
+        )
+
+    if content_type == "silent":
+        return "\n".join(
+            [
+                "This is a SILENT / NEAR-SILENT caption.",
+                "Use either one extremely short line or an ellipsis.",
+                "No explanation. No context.",
+            ]
+        )
 
     if post_mode == "devlog":
         guidance = [
