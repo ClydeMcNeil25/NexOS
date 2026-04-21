@@ -1,3 +1,9 @@
 __pycache__/
 *.pyc
 .env
+ezra_auto.lock
+render_debug.json
+staged_prompt.txt
+visual_prompt.txt
+final_caption.txt
+Images/

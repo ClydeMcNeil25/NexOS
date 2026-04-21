@@ -1,0 +1,5 @@
+anthropic
+google-genai
+pillow
+python-dotenv
+requests

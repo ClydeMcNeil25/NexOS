@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -9,12 +10,19 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parent
 RUN_HISTORY_FILE = ROOT_DIR / "run_history.json"
 LOCK_FILE = ROOT_DIR / "ezra_auto.lock"
-BATCH_FILE = ROOT_DIR / "run_agent_silent.bat"
 
 DEVLOG_HOUR = 21  # 9 PM
 DAY_POST_START_HOUR = 10  # 10 AM
 DAY_POST_END_HOUR = 18    # before 6 PM
 LOCK_TIMEOUT_MINUTES = 30
+PIPELINE_STEPS = [
+    ("Daily Visual Manager", "daily_visual_manager.py"),
+    ("Core Agent", "run_core.py"),
+    ("Visual Agent", "run_visual.py"),
+    ("Visual Renderer", "render_visual.py"),
+    ("Caption Agent", "run_caption.py"),
+    ("Webhook Delivery", "post_to_webhook.py"),
+]
 
 
 def load_json(path: Path, default):
@@ -198,16 +206,27 @@ def append_automation_log(
     save_run_history(data)
 
 
-def run_pipeline() -> int:
-    if not BATCH_FILE.exists():
-        raise FileNotFoundError(f"Missing launcher: {BATCH_FILE}")
+def run_step(label: str, script_name: str) -> int:
+    script_path = ROOT_DIR / script_name
+    if not script_path.exists():
+        raise FileNotFoundError(f"Missing pipeline step: {script_path}")
 
+    print(f"[AUTO]: Running {label}...")
     result = subprocess.run(
-        ["cmd", "/c", str(BATCH_FILE)],
+        [sys.executable, str(script_path)],
         cwd=str(ROOT_DIR),
         shell=False,
     )
     return int(result.returncode)
+
+
+def run_pipeline() -> int:
+    for label, script_name in PIPELINE_STEPS:
+        code = run_step(label, script_name)
+        if code != 0:
+            print(f"[AUTO]: {label} failed with exit code {code}.")
+            return code
+    return 0
 
 
 def main() -> int:

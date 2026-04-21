@@ -1,7 +1,0 @@
-{
-  "timestamp": "2026-04-19 16:06:09",
-  "model": "imagen-4.0-generate-001",
-  "has_generated_images_attr": true,
-  "generated_images_count": 0,
-  "response_repr": "GenerateImagesResponse(\n  sdk_http_response=HttpResponse(\n    headers=<dict len=11>\n  )\n)"
-}
