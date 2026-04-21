@@ -3,12 +3,14 @@ from __future__ import annotations
 import os
 import re
 import base64
+import time
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import errors
 from google.genai import types
 from PIL import Image
 
@@ -23,6 +25,8 @@ MODEL_NAME = "gemini-2.5-flash-image"
 
 TARGET_WIDTH = 1080
 TARGET_HEIGHT = 1350  # 4:5 ratio
+GEMINI_MAX_ATTEMPTS = 4
+GEMINI_RETRY_DELAYS_SECONDS = [30, 60, 120]
 
 
 def get_api_key() -> str:
@@ -152,6 +156,62 @@ def print_response_diagnostics(response) -> None:
         print(f"[RENDERER_DEBUG]: response.text -> {response_text}")
 
 
+def is_retryable_gemini_error(exc: Exception) -> bool:
+    if isinstance(exc, errors.ServerError):
+        status_code = getattr(exc, "status_code", None)
+        return status_code in {429, 500, 502, 503, 504}
+
+    message = str(exc).lower()
+    retryable_markers = [
+        "503",
+        "429",
+        "unavailable",
+        "high demand",
+        "temporarily",
+        "rate limit",
+        "resource exhausted",
+    ]
+    return any(marker in message for marker in retryable_markers)
+
+
+def generate_content_with_retry(
+    client: genai.Client,
+    *,
+    contents: list[types.Part | str],
+):
+    last_error: Exception | None = None
+
+    for attempt in range(1, GEMINI_MAX_ATTEMPTS + 1):
+        try:
+            print(f"[RENDERER]: Gemini attempt {attempt}/{GEMINI_MAX_ATTEMPTS}...")
+            return client.models.generate_content(
+                model=MODEL_NAME,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    response_modalities=["IMAGE"],
+                    image_config=types.ImageConfig(
+                        aspect_ratio="4:5",
+                    ),
+                ),
+            )
+        except Exception as exc:
+            last_error = exc
+            if attempt >= GEMINI_MAX_ATTEMPTS or not is_retryable_gemini_error(exc):
+                raise
+
+            delay = GEMINI_RETRY_DELAYS_SECONDS[min(attempt - 1, len(GEMINI_RETRY_DELAYS_SECONDS) - 1)]
+            print(
+                "[RENDERER]: Gemini temporary error. "
+                f"Retrying in {delay}s. Error: {exc}"
+            )
+            time.sleep(delay)
+
+    if last_error is not None:
+        raise last_error
+
+    raise RuntimeError("Gemini retry loop ended unexpectedly.")
+
+
 # =========================
 # MAIN EXECUTION
 # =========================
@@ -206,35 +266,20 @@ def main() -> int:
 
     print("[RENDERER]: Sending prompt + reference to Gemini image model...")
 
-    response = client.models.generate_content(
-        model=MODEL_NAME,
-        contents=contents,
-        config=types.GenerateContentConfig(
-            response_modalities=["IMAGE"],
-            image_config=types.ImageConfig(
-                aspect_ratio="4:5",
-            ),
-        ),
-    )
+    response = generate_content_with_retry(client, contents=contents)
 
     try:
         image = extract_first_image(response)
     except RuntimeError:
         if PROFILE_IMAGE.exists():
             print("[RENDERER]: Reference-based generation returned no image. Retrying prompt-only generation...")
-            fallback_response = client.models.generate_content(
-                model=MODEL_NAME,
+            fallback_response = generate_content_with_retry(
+                client,
                 contents=[
                     base_instruction.replace("The provided image is", "Ezra Nex is")
                     + " No reference image is available for this retry.",
                     prompt,
                 ],
-                config=types.GenerateContentConfig(
-                    response_modalities=["IMAGE"],
-                    image_config=types.ImageConfig(
-                        aspect_ratio="4:5",
-                    ),
-                ),
             )
             image = extract_first_image(fallback_response)
         else:
