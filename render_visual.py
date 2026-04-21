@@ -27,6 +27,7 @@ TARGET_WIDTH = 1080
 TARGET_HEIGHT = 1350  # 4:5 ratio
 GEMINI_MAX_ATTEMPTS = 4
 GEMINI_RETRY_DELAYS_SECONDS = [30, 60, 120]
+ALLOW_PROMPT_ONLY_FALLBACK = False
 
 
 def get_api_key() -> str:
@@ -271,7 +272,7 @@ def main() -> int:
     try:
         image = extract_first_image(response)
     except RuntimeError:
-        if PROFILE_IMAGE.exists():
+        if PROFILE_IMAGE.exists() and ALLOW_PROMPT_ONLY_FALLBACK:
             print("[RENDERER]: Reference-based generation returned no image. Retrying prompt-only generation...")
             fallback_response = generate_content_with_retry(
                 client,
