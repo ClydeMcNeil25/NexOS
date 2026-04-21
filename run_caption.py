@@ -137,6 +137,17 @@ Manual Caption Override:
 """.rstrip()
 
 
+def add_devlog_hashtag_if_needed(caption: str, signal_context: dict) -> str:
+    post_mode = str(signal_context.get("post_mode", "") or "").strip().lower()
+    if post_mode != "devlog":
+        return caption
+
+    if "#devlog" in caption.lower():
+        return caption
+
+    return f"{caption.rstrip()} #devlog"
+
+
 def build_user_prompt(
     state_text: str,
     memory_text: str,
@@ -218,6 +229,7 @@ def main() -> int:
     )
 
     final_caption = parse_caption_response(raw_caption)
+    final_caption = add_devlog_hashtag_if_needed(final_caption, signal_context)
     write_text(FINAL_CAPTION_FILE, final_caption + "\n")
 
     state_text = replace_field(state_text, "Current State", "IDLE")
