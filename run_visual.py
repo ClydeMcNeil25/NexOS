@@ -7,6 +7,7 @@ from pathlib import Path
 from anthropic_client import call_claude
 from ezra_utils import (
     MEMORY_FILE,
+    PERSONALITY_FILE,
     STATE_FILE,
     VISUAL_PROMPT_FILE,
     VISUAL_SYSTEM_PROMPT_FILE,
@@ -152,7 +153,7 @@ def build_mode_guidance(signal_context: dict) -> str:
         guidance = [
             "This is a DEVLOG visual.",
             "The image should feel like a believable software-development moment in Ezra's life.",
-            "It should support the sense that he is documenting real progress, friction, or instability around an early precursor to NexOS.",
+            "It should support the sense that he is documenting real progress, friction, or instability around NEX//THR.",
             "Do not make it theatrical or overly sci-fi. Keep it grounded, technical, and cinematic.",
         ]
 
@@ -191,6 +192,7 @@ Manual Visual Override:
 def build_user_prompt(
     state_text: str,
     memory_text: str,
+    personality_text: str,
     daily_state: dict,
     signal_context: dict,
 ) -> str:
@@ -262,6 +264,9 @@ Mode guidance:
 
 {override_block}
 
+Ezra personality and ideology:
+{personality_text}
+
 Signal ID: {signal_id}
 
 === CURRENT STATE FILE ===
@@ -287,6 +292,7 @@ def main() -> int:
         return 1
 
     memory_text = read_text(MEMORY_FILE)
+    personality_text = read_text(PERSONALITY_FILE)
     system_prompt = read_text(VISUAL_SYSTEM_PROMPT_FILE)
     daily_state = load_daily_visual_state()
     signal_context = get_signal_context(signal_id)
@@ -294,6 +300,7 @@ def main() -> int:
     user_prompt = build_user_prompt(
         state_text=state_text,
         memory_text=memory_text,
+        personality_text=personality_text,
         daily_state=daily_state,
         signal_context=signal_context,
     )

@@ -9,6 +9,7 @@ from anthropic_client import call_claude
 from ezra_utils import (
     CORE_PROMPT_FILE,
     MEMORY_FILE,
+    PERSONALITY_FILE,
     STATE_FILE,
     append_internal_note,
     extract_current_state,
@@ -139,8 +140,9 @@ def build_mode_instruction(post_mode: str, devlog_state: str | None) -> str:
 POST MODE: DEVLOG
 
 This post MUST feel like Ezra Nex documenting the state of his software development journey.
-The software is an early-stage precursor to what will eventually become NexOS, but DO NOT overexplain that.
+The software is NEX//THR, an early-stage operating system project, but DO NOT overexplain that.
 The tone should feel real, technical, restrained, and slightly eerie when appropriate.
+The core signal should support a caption that can read like a Build Note when this reaches the Caption Agent.
 
 Tonight's devlog state is: {devlog_state}
 
@@ -172,7 +174,13 @@ It should feel like Ezra existing in the world between major logs.
 """.strip()
 
 
-def build_user_prompt(state_text: str, memory_text: str, post_mode: str, devlog_state: str | None) -> str:
+def build_user_prompt(
+    state_text: str,
+    memory_text: str,
+    personality_text: str,
+    post_mode: str,
+    devlog_state: str | None,
+) -> str:
     current_state = extract_current_state(state_text)
     signal_id = timestamp_signal_id()
     timestamp = timestamp_full()
@@ -206,6 +214,10 @@ HANDOFF_NOTE: ...
 Context from agent_state.md:
 --------------------------
 {state_text}
+
+Ezra personality and ideology:
+------------------------------
+{personality_text}
 
 Context from memory:
 --------------------
@@ -297,6 +309,7 @@ def main() -> None:
         raise RuntimeError("agent_state.md is empty or missing required content.")
 
     memory_text = read_text(MEMORY_FILE)
+    personality_text = read_text(PERSONALITY_FILE)
     system_prompt = read_text(CORE_PROMPT_FILE)
     if not system_prompt.strip():
         raise RuntimeError("core_system_prompt.txt is empty.")
@@ -312,6 +325,7 @@ def main() -> None:
     user_prompt = build_user_prompt(
         state_text=state_text,
         memory_text=memory_text,
+        personality_text=personality_text,
         post_mode=post_mode,
         devlog_state=devlog_state,
     )

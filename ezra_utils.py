@@ -13,6 +13,7 @@ FINAL_CAPTION_FILE = ROOT_DIR / "final_caption.txt"
 CORE_PROMPT_FILE = ROOT_DIR / "core_system_prompt.txt"
 VISUAL_SYSTEM_PROMPT_FILE = ROOT_DIR / "visual_system_prompt.txt"
 CAPTION_SYSTEM_PROMPT_FILE = ROOT_DIR / "caption_system_prompt.txt"
+PERSONALITY_FILE = ROOT_DIR / "ezra_personality.md"
 
 
 def now_dt() -> datetime:

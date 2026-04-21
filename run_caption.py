@@ -8,6 +8,7 @@ from ezra_utils import (
     CAPTION_SYSTEM_PROMPT_FILE,
     FINAL_CAPTION_FILE,
     MEMORY_FILE,
+    PERSONALITY_FILE,
     STATE_FILE,
     append_internal_note,
     append_text,
@@ -100,7 +101,8 @@ def build_mode_guidance(signal_context: dict) -> str:
     if post_mode == "devlog":
         guidance = [
             "This is a DEVLOG caption.",
-            "The caption should feel like Ezra is documenting the current state of a real software build cycle.",
+            "The caption should feel like Ezra is documenting the current state of a real NEX//THR build cycle.",
+            "Prefer Build Note format for devlogs: 'Build Note: NEX//THR ...'",
             "It should be concise, believable, restrained, and slightly cold.",
             "Do not sound like marketing copy. Do not sound inspirational. Do not overexplain.",
         ]
@@ -151,6 +153,7 @@ def add_devlog_hashtag_if_needed(caption: str, signal_context: dict) -> str:
 def build_user_prompt(
     state_text: str,
     memory_text: str,
+    personality_text: str,
     signal_context: dict,
 ) -> str:
     signal_id = extract_signal_id(state_text)
@@ -189,6 +192,9 @@ Mode guidance:
 
 {override_block}
 
+Ezra personality and ideology:
+{personality_text}
+
 Signal ID: {signal_id}
 
 === CURRENT STATE FILE ===
@@ -213,12 +219,14 @@ def main() -> int:
         return 1
 
     memory_text = read_text(MEMORY_FILE)
+    personality_text = read_text(PERSONALITY_FILE)
     system_prompt = read_text(CAPTION_SYSTEM_PROMPT_FILE)
     signal_context = get_signal_context(signal_id)
 
     user_prompt = build_user_prompt(
         state_text=state_text,
         memory_text=memory_text,
+        personality_text=personality_text,
         signal_context=signal_context,
     )
 
