@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timedelta
@@ -15,6 +16,7 @@ DEVLOG_HOUR = 21  # 9 PM
 DAY_POST_START_HOUR = 10  # 10 AM
 DAY_POST_END_HOUR = 18    # before 6 PM
 LOCK_TIMEOUT_MINUTES = 30
+FORCE_POST_MODES = {"day_post", "devlog"}
 PIPELINE_STEPS = [
     ("Daily Visual Manager", "daily_visual_manager.py"),
     ("Core Agent", "run_core.py"),
@@ -135,6 +137,17 @@ def already_completed_today(post_mode: str) -> bool:
 
 
 def determine_desired_post_mode(current_dt: datetime) -> str | None:
+    forced_post_mode = os.getenv("EZRA_FORCE_POST_MODE", "").strip().lower()
+    if forced_post_mode:
+        if forced_post_mode not in FORCE_POST_MODES:
+            print(
+                "[AUTO]: Ignoring invalid EZRA_FORCE_POST_MODE value. "
+                "Use 'day_post' or 'devlog'."
+            )
+        else:
+            print(f"[AUTO]: Forced post mode via env -> {forced_post_mode}")
+            return forced_post_mode
+
     hour = current_dt.hour
 
     if hour >= DEVLOG_HOUR:

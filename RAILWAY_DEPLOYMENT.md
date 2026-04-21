@@ -17,10 +17,13 @@ python run_agent_auto.py
 
 - `MAKE_WEBHOOK_URL`
 - `TZ=America/Chicago`
+- `EZRA_FORCE_POST_MODE=day_post` or `EZRA_FORCE_POST_MODE=devlog`
 
 If `MAKE_WEBHOOK_URL` is not set, Ezra still completes the local/cloud generation cycle and skips delivery.
 
 Set `TZ=America/Chicago` so the day post and devlog windows match your local schedule.
+
+Use `EZRA_FORCE_POST_MODE` only for deployment testing. Remove it after verification so Ezra returns to schedule-based automation.
 
 ## Notes
 
