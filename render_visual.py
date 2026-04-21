@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import base64
+import random
 import time
 from datetime import datetime
 from io import BytesIO
@@ -27,6 +28,12 @@ TARGET_WIDTH = 1080
 TARGET_HEIGHT = 1350  # 4:5 ratio
 GEMINI_MAX_ATTEMPTS = 4
 GEMINI_RETRY_DELAYS_SECONDS = [30, 60, 120]
+
+# 503-specific exponential backoff settings
+GEMINI_503_MAX_ATTEMPTS = 5
+GEMINI_503_BACKOFF_BASE_SECONDS = 2
+GEMINI_503_BACKOFF_MAX_SECONDS = 60
+GEMINI_503_BACKOFF_MULTIPLIER = 2
 
 
 def get_api_key() -> str:
@@ -174,16 +181,98 @@ def is_retryable_gemini_error(exc: Exception) -> bool:
     return any(marker in message for marker in retryable_markers)
 
 
+def _is_503_error(exc: Exception) -> bool:
+    """Return True when *exc* is specifically a 503 UNAVAILABLE error."""
+    if isinstance(exc, errors.ServerError):
+        status_code = getattr(exc, "status_code", None)
+        if status_code == 503:
+            return True
+    message = str(exc).lower()
+    return "503" in message or "unavailable" in message
+
+
 def generate_content_with_retry(
     client: genai.Client,
     *,
     contents: list[types.Part | str],
 ):
+    """Call Gemini with two independent retry strategies:
+
+    * **503 UNAVAILABLE** – exponential backoff with jitter, up to
+      ``GEMINI_503_MAX_ATTEMPTS`` total attempts.  Delays start at
+      ``GEMINI_503_BACKOFF_BASE_SECONDS``, double each time (×
+      ``GEMINI_503_BACKOFF_MULTIPLIER``), and are capped at
+      ``GEMINI_503_BACKOFF_MAX_SECONDS``.  A small random jitter (±20 %)
+      is added to avoid thundering-herd effects.
+
+    * **Other retryable errors** (429, 500, 502, 504, …) – fixed delays
+      from ``GEMINI_RETRY_DELAYS_SECONDS``, up to ``GEMINI_MAX_ATTEMPTS``
+      total attempts (existing behaviour, unchanged).
+
+    Non-retryable errors are re-raised immediately on the first occurrence.
+    """
     last_error: Exception | None = None
+
+    # --- 503-specific retry loop (exponential backoff with jitter) ----------
+    backoff = float(GEMINI_503_BACKOFF_BASE_SECONDS)
+    for attempt_503 in range(1, GEMINI_503_MAX_ATTEMPTS + 1):
+        try:
+            print(
+                f"[RENDERER]: Gemini attempt {attempt_503}/{GEMINI_503_MAX_ATTEMPTS} "
+                "(503-backoff layer)..."
+            )
+            return client.models.generate_content(
+                model=MODEL_NAME,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    response_modalities=["IMAGE"],
+                    image_config=types.ImageConfig(
+                        aspect_ratio="4:5",
+                    ),
+                ),
+            )
+        except Exception as exc:
+            last_error = exc
+
+            if not _is_503_error(exc):
+                # Not a 503 – hand off to the general retry loop below.
+                break
+
+            if attempt_503 >= GEMINI_503_MAX_ATTEMPTS:
+                print(
+                    f"[RENDERER]: Gemini 503 error on attempt {attempt_503}/"
+                    f"{GEMINI_503_MAX_ATTEMPTS}. Maximum 503 retries exhausted. "
+                    f"Error: {exc}"
+                )
+                raise
+
+            # Exponential backoff with ±20 % jitter.
+            jitter = backoff * 0.2 * (2 * random.random() - 1)
+            delay = min(backoff + jitter, GEMINI_503_BACKOFF_MAX_SECONDS)
+            print(
+                f"[RENDERER]: Gemini 503 UNAVAILABLE on attempt {attempt_503}/"
+                f"{GEMINI_503_MAX_ATTEMPTS}. "
+                f"Retrying in {delay:.1f}s (backoff). Error: {exc}"
+            )
+            time.sleep(delay)
+            backoff = min(
+                backoff * GEMINI_503_BACKOFF_MULTIPLIER,
+                GEMINI_503_BACKOFF_MAX_SECONDS,
+            )
+    else:
+        # The for-loop completed without a `break`, meaning every attempt
+        # raised a 503 and we exhausted retries – already raised above.
+        pass  # pragma: no cover
+
+    # --- General retry loop for non-503 retryable errors --------------------
+    # `last_error` holds the non-503 exception that caused the break above.
+    # Re-raise immediately if it is not retryable at all.
+    if last_error is not None and not is_retryable_gemini_error(last_error):
+        raise last_error
 
     for attempt in range(1, GEMINI_MAX_ATTEMPTS + 1):
         try:
-            print(f"[RENDERER]: Gemini attempt {attempt}/{GEMINI_MAX_ATTEMPTS}...")
+            print(f"[RENDERER]: Gemini attempt {attempt}/{GEMINI_MAX_ATTEMPTS} (general retry layer)...")
             return client.models.generate_content(
                 model=MODEL_NAME,
                 contents=contents,
@@ -202,7 +291,8 @@ def generate_content_with_retry(
             delay = GEMINI_RETRY_DELAYS_SECONDS[min(attempt - 1, len(GEMINI_RETRY_DELAYS_SECONDS) - 1)]
             print(
                 "[RENDERER]: Gemini temporary error. "
-                f"Retrying in {delay}s. Error: {exc}"
+                f"Retrying in {delay}s (attempt {attempt}/{GEMINI_MAX_ATTEMPTS}). "
+                f"Error: {exc}"
             )
             time.sleep(delay)
 
