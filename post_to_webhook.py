@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import base64
 import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 import requests
 from dotenv import load_dotenv
@@ -35,10 +33,9 @@ def latest_image() -> Path | None:
     return max(images, key=lambda path: path.stat().st_mtime)
 
 
-def build_payload(image_path: Path, caption: str) -> dict[str, Any]:
+def build_form_fields(image_path: Path, caption: str) -> dict[str, str]:
     state_text = read_text(STATE_FILE)
     signal_id = extract_signal_id(state_text)
-    image_bytes = image_path.read_bytes()
 
     return {
         "source": "ezra_nex",
@@ -47,11 +44,31 @@ def build_payload(image_path: Path, caption: str) -> dict[str, Any]:
         "caption": caption,
         "image_filename": image_path.name,
         "image_mime_type": "image/png",
-        "image_base64": base64.b64encode(image_bytes).decode("ascii"),
+        "metadata_json": json.dumps(
+            {
+                "state_file": STATE_FILE.name,
+                "memory_file": MEMORY_FILE.name,
+                "image_size_bytes": image_path.stat().st_size,
+            }
+        ),
+    }
+
+
+def build_legacy_json_payload(image_path: Path, caption: str) -> dict[str, object]:
+    state_text = read_text(STATE_FILE)
+    signal_id = extract_signal_id(state_text)
+
+    return {
+        "source": "ezra_nex",
+        "signal_id": signal_id,
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "caption": caption,
+        "image_filename": image_path.name,
+        "image_mime_type": "image/png",
         "metadata": {
             "state_file": STATE_FILE.name,
             "memory_file": MEMORY_FILE.name,
-            "image_size_bytes": len(image_bytes),
+            "image_size_bytes": image_path.stat().st_size,
         },
     }
 
@@ -72,8 +89,21 @@ def main() -> int:
         print("[WEBHOOK]: final_caption.txt is empty. Skipping delivery.")
         return 1
 
-    payload = build_payload(image_path, caption)
-    response = requests.post(webhook_url, json=payload, timeout=WEBHOOK_TIMEOUT_SECONDS)
+    form_fields = build_form_fields(image_path, caption)
+    legacy_payload = build_legacy_json_payload(image_path, caption)
+
+    with image_path.open("rb") as image_file:
+        response = requests.post(
+            webhook_url,
+            data={
+                **form_fields,
+                "payload_json": json.dumps(legacy_payload),
+            },
+            files={
+                "image": (image_path.name, image_file, "image/png"),
+            },
+            timeout=WEBHOOK_TIMEOUT_SECONDS,
+        )
     response.raise_for_status()
 
     print(f"[WEBHOOK]: Delivered {image_path.name} to Make webhook.")
