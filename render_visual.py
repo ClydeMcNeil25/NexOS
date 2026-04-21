@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import base64
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
@@ -95,20 +96,60 @@ def extract_first_image(response) -> Image.Image:
         if text:
             text_parts.append(text)
 
+        as_image = getattr(part, "as_image", None)
+        if callable(as_image):
+            try:
+                image = as_image()
+                if image is not None:
+                    return image.convert("RGB")
+            except Exception:
+                pass
+
         inline_data = getattr(part, "inline_data", None)
         if inline_data is not None:
             data = getattr(inline_data, "data", None)
             if data:
+                if isinstance(data, str):
+                    data = base64.b64decode(data)
                 image_bytes = data
                 break
 
     if image_bytes is None:
+        print_response_diagnostics(response)
         detail = " ".join(text_parts).strip()
         if detail:
             raise RuntimeError(f"Gemini returned no image parts. Text response: {detail}")
         raise RuntimeError("Gemini returned no image parts.")
 
     return Image.open(BytesIO(image_bytes)).convert("RGB")
+
+
+def print_response_diagnostics(response) -> None:
+    print("[RENDERER_DEBUG]: Gemini returned no image bytes.")
+    print(f"[RENDERER_DEBUG]: Response type -> {type(response).__name__}")
+
+    prompt_feedback = getattr(response, "prompt_feedback", None)
+    if prompt_feedback is not None:
+        print(f"[RENDERER_DEBUG]: prompt_feedback -> {prompt_feedback!r}")
+
+    candidates = getattr(response, "candidates", None)
+    print(f"[RENDERER_DEBUG]: candidates_count -> {len(candidates) if candidates else 0}")
+    for index, candidate in enumerate(candidates or []):
+        finish_reason = getattr(candidate, "finish_reason", None)
+        safety_ratings = getattr(candidate, "safety_ratings", None)
+        print(f"[RENDERER_DEBUG]: candidate[{index}].finish_reason -> {finish_reason!r}")
+        if safety_ratings:
+            print(f"[RENDERER_DEBUG]: candidate[{index}].safety_ratings -> {safety_ratings!r}")
+
+        content = getattr(candidate, "content", None)
+        cparts = getattr(content, "parts", None) or []
+        print(f"[RENDERER_DEBUG]: candidate[{index}].parts_count -> {len(cparts)}")
+        for part_index, part in enumerate(cparts):
+            print(f"[RENDERER_DEBUG]: part[{part_index}] -> {part!r}")
+
+    response_text = getattr(response, "text", None)
+    if response_text:
+        print(f"[RENDERER_DEBUG]: response.text -> {response_text}")
 
 
 # =========================
@@ -137,9 +178,7 @@ def main() -> int:
 
     client = genai.Client(api_key=api_key)
 
-    contents: list[types.Part | str] = []
-
-    contents.append(
+    base_instruction = (
         "The provided image is the canonical identity reference for Ezra Nex. "
         "Maintain the same person, facial structure, hairstyle, and identity across all generations. "
         "You may change outfit, pose, camera angle, lighting, and environment, "
@@ -149,6 +188,8 @@ def main() -> int:
         "If in a cafe, the setting should feel isolated, subdued, and introspective rather than social or lively. "
         "Do not copy the reference image exactly. Generate a new scene with the same individual."
     )
+
+    contents: list[types.Part | str] = [base_instruction]
 
     if PROFILE_IMAGE.exists():
         print(f"[RENDERER]: Using character reference image: {PROFILE_IMAGE.name}")
@@ -176,7 +217,28 @@ def main() -> int:
         ),
     )
 
-    image = extract_first_image(response)
+    try:
+        image = extract_first_image(response)
+    except RuntimeError:
+        if PROFILE_IMAGE.exists():
+            print("[RENDERER]: Reference-based generation returned no image. Retrying prompt-only generation...")
+            fallback_response = client.models.generate_content(
+                model=MODEL_NAME,
+                contents=[
+                    base_instruction.replace("The provided image is", "Ezra Nex is")
+                    + " No reference image is available for this retry.",
+                    prompt,
+                ],
+                config=types.GenerateContentConfig(
+                    response_modalities=["IMAGE"],
+                    image_config=types.ImageConfig(
+                        aspect_ratio="4:5",
+                    ),
+                ),
+            )
+            image = extract_first_image(fallback_response)
+        else:
+            raise
 
     image = crop_to_4_5(image)
     image = image.resize((TARGET_WIDTH, TARGET_HEIGHT), Image.LANCZOS)
