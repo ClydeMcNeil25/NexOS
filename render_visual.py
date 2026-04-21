@@ -81,6 +81,7 @@ def crop_to_4_5(img: Image.Image) -> Image.Image:
 
 def extract_first_image(response) -> Image.Image:
     image_bytes = None
+    text_parts: list[str] = []
 
     parts = getattr(response, "parts", None)
     if parts is None and getattr(response, "candidates", None):
@@ -90,6 +91,10 @@ def extract_first_image(response) -> Image.Image:
             parts = None
 
     for part in parts or []:
+        text = getattr(part, "text", None)
+        if text:
+            text_parts.append(text)
+
         inline_data = getattr(part, "inline_data", None)
         if inline_data is not None:
             data = getattr(inline_data, "data", None)
@@ -98,6 +103,9 @@ def extract_first_image(response) -> Image.Image:
                 break
 
     if image_bytes is None:
+        detail = " ".join(text_parts).strip()
+        if detail:
+            raise RuntimeError(f"Gemini returned no image parts. Text response: {detail}")
         raise RuntimeError("Gemini returned no image parts.")
 
     return Image.open(BytesIO(image_bytes)).convert("RGB")
@@ -138,7 +146,7 @@ def main() -> int:
         "but the identity must remain consistent with the reference image. "
         "Ezra's visual world must remain cold, controlled, desaturated, and emotionally distant. "
         "If outdoors, conditions should feel overcast, rainy, or post-rain rather than bright or cheerful. "
-        "If in a café, the setting should feel isolated, subdued, and introspective rather than social or lively. "
+        "If in a cafe, the setting should feel isolated, subdued, and introspective rather than social or lively. "
         "Do not copy the reference image exactly. Generate a new scene with the same individual."
     )
 
@@ -160,6 +168,12 @@ def main() -> int:
     response = client.models.generate_content(
         model=MODEL_NAME,
         contents=contents,
+        config=types.GenerateContentConfig(
+            response_modalities=["IMAGE"],
+            image_config=types.ImageConfig(
+                aspect_ratio="4:5",
+            ),
+        ),
     )
 
     image = extract_first_image(response)
@@ -181,3 +195,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
