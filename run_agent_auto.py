@@ -12,11 +12,13 @@ ROOT_DIR = Path(__file__).resolve().parent
 RUN_HISTORY_FILE = ROOT_DIR / "run_history.json"
 LOCK_FILE = ROOT_DIR / "ezra_auto.lock"
 
+MORNING_POST_START_HOUR = 9
+MORNING_POST_END_HOUR = 12
+AFTERNOON_POST_START_HOUR = 14
+AFTERNOON_POST_END_HOUR = 17
 DEVLOG_HOUR = 21  # 9 PM
-DAY_POST_START_HOUR = 10  # 10 AM
-DAY_POST_END_HOUR = 18    # before 6 PM
 LOCK_TIMEOUT_MINUTES = 30
-FORCE_POST_MODES = {"day_post", "devlog"}
+FORCE_POST_MODES = {"morning_post", "afternoon_post", "day_post", "devlog"}
 PIPELINE_STEPS = [
     ("Daily Visual Manager", "daily_visual_manager.py"),
     ("Core Agent", "run_core.py"),
@@ -128,37 +130,56 @@ def get_today_entries() -> list[dict]:
     return results
 
 
-def already_completed_today(post_mode: str) -> bool:
+def already_completed_today(schedule_slot: str) -> bool:
     today_entries = get_today_entries()
     for entry in today_entries:
-        if entry.get("event_type") == "automation_completion" and entry.get("post_mode") == post_mode:
+        if (
+            entry.get("event_type") == "automation_completion"
+            and entry.get("schedule_slot", entry.get("post_mode")) == schedule_slot
+        ):
             return True
     return False
 
 
-def determine_desired_post_mode(current_dt: datetime) -> str | None:
+def normalize_forced_post_mode(forced_post_mode: str) -> tuple[str, str] | None:
+    if forced_post_mode == "day_post":
+        return "day_post", "manual_day_post"
+    if forced_post_mode in {"morning_post", "afternoon_post"}:
+        return "day_post", forced_post_mode
+    if forced_post_mode == "devlog":
+        return "devlog", "devlog"
+    return None
+
+
+def determine_desired_post_mode(current_dt: datetime) -> tuple[str, str] | None:
     forced_post_mode = os.getenv("EZRA_FORCE_POST_MODE", "").strip().lower()
     if forced_post_mode:
-        if forced_post_mode not in FORCE_POST_MODES:
+        forced = normalize_forced_post_mode(forced_post_mode)
+        if forced_post_mode not in FORCE_POST_MODES or forced is None:
             print(
                 "[AUTO]: Ignoring invalid EZRA_FORCE_POST_MODE value. "
-                "Use 'day_post' or 'devlog'."
+                "Use 'morning_post', 'afternoon_post', 'day_post', or 'devlog'."
             )
         else:
             print(f"[AUTO]: Forced post mode via env -> {forced_post_mode}")
-            return forced_post_mode
+            return forced
 
     hour = current_dt.hour
+
+    if MORNING_POST_START_HOUR <= hour < MORNING_POST_END_HOUR:
+        if already_completed_today("morning_post"):
+            return None
+        return "day_post", "morning_post"
+
+    if AFTERNOON_POST_START_HOUR <= hour < AFTERNOON_POST_END_HOUR:
+        if already_completed_today("afternoon_post"):
+            return None
+        return "day_post", "afternoon_post"
 
     if hour >= DEVLOG_HOUR:
         if already_completed_today("devlog"):
             return None
-        return "devlog"
-
-    if DAY_POST_START_HOUR <= hour < DAY_POST_END_HOUR:
-        if already_completed_today("day_post"):
-            return None
-        return "day_post"
+        return "devlog", "devlog"
 
     return None
 
@@ -200,6 +221,7 @@ def append_automation_log(
     *,
     status: str,
     post_mode: str | None,
+    schedule_slot: str | None = None,
     note: str,
 ) -> None:
     data = load_run_history()
@@ -210,6 +232,7 @@ def append_automation_log(
             "timestamp": now_dt().strftime("%Y-%m-%d %H:%M:%S"),
             "event_type": "automation_completion" if status == "success" else "automation_event",
             "post_mode": post_mode or "",
+            "schedule_slot": schedule_slot or post_mode or "",
             "status": status,
             "note": note,
         }
@@ -255,18 +278,20 @@ def main() -> int:
         return 1
 
     current_dt = now_dt()
-    post_mode = determine_desired_post_mode(current_dt)
+    scheduled_run = determine_desired_post_mode(current_dt)
 
-    if not post_mode:
+    if not scheduled_run:
         print("[AUTO]: Nothing scheduled to run right now.")
         append_automation_log(
             status="skipped",
             post_mode=None,
+            schedule_slot=None,
             note="No valid post window or today's target already completed.",
         )
         return 0
 
-    print(f"[AUTO]: Resolved scheduled mode -> {post_mode}")
+    post_mode, schedule_slot = scheduled_run
+    print(f"[AUTO]: Resolved scheduled mode -> {post_mode} | slot -> {schedule_slot}")
 
     create_lock()
 
@@ -280,7 +305,8 @@ def main() -> int:
             append_automation_log(
                 status="success",
                 post_mode=post_mode,
-                note=f"{post_mode} completed successfully.",
+                schedule_slot=schedule_slot,
+                note=f"{schedule_slot} completed successfully as {post_mode}.",
             )
             return 0
 
@@ -288,6 +314,7 @@ def main() -> int:
         append_automation_log(
             status="failed",
             post_mode=post_mode,
+            schedule_slot=schedule_slot,
             note=f"{post_mode} failed with exit code {code}.",
         )
         return code

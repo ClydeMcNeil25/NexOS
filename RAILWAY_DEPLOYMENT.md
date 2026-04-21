@@ -25,6 +25,29 @@ Set `TZ=America/Chicago` so the day post and devlog windows match your local sch
 
 Use `EZRA_FORCE_POST_MODE` only for deployment testing. Remove it after verification so Ezra returns to schedule-based automation.
 
+Valid force values:
+
+- `morning_post`
+- `afternoon_post`
+- `day_post`
+- `devlog`
+
+## Production Schedule
+
+Ezra now supports three daily slots with duplicate protection:
+
+- Morning post: 9:00 AM to before 12:00 PM
+- Afternoon post: 2:00 PM to before 5:00 PM
+- Devlog: 9:00 PM or later
+
+Recommended Railway cron for production:
+
+```bash
+python run_agent_auto.py
+```
+
+Run it every 15-30 minutes. Ezra will skip automatically when no slot is active or when that slot already completed today.
+
 ## Notes
 
 - Do not upload `.env` to GitHub or Railway.
