@@ -25,7 +25,7 @@ PIPELINE_STEPS = [
     ("Visual Agent", "run_visual.py"),
     ("Visual Renderer", "render_visual.py"),
     ("Caption Agent", "run_caption.py"),
-    ("Webhook Delivery", "post_to_webhook.py"),
+    ("Facebook Posting", "post_to_webhook.py"),
 ]
 
 

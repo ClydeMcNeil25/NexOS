@@ -12,14 +12,15 @@ python run_agent_auto.py
 
 - `ANTHROPIC_API_KEY`
 - `GEMINI_API_KEY` or `GOOGLE_API_KEY`
+- `FACEBOOK_PAGE_ID`
+- `FACEBOOK_PAGE_ACCESS_TOKEN`
 
 ## Optional Environment Variables
 
-- `MAKE_WEBHOOK_URL`
 - `TZ=America/Chicago`
 - `EZRA_FORCE_POST_MODE=day_post` or `EZRA_FORCE_POST_MODE=devlog`
 
-If `MAKE_WEBHOOK_URL` is not set, Ezra still completes the local/cloud generation cycle and skips delivery.
+Ezra now posts directly to the Facebook Pages API and expects a Page access token with `pages_manage_posts`.
 
 Set `TZ=America/Chicago` so the day post and devlog windows match your local schedule.
 
@@ -53,3 +54,4 @@ Run it every 15-30 minutes. Ezra will skip automatically when no slot is active 
 - Do not upload `.env` to GitHub or Railway.
 - Railway environment variables replace `.env`.
 - Runtime files such as generated images, captions, prompts, and lock files are ignored by Git after this setup.
+- If Facebook posting fails, Ezra preserves the generated image and caption locally.
