@@ -189,6 +189,37 @@ def is_retryable_gemini_error(exc: Exception) -> bool:
     return any(marker in message for marker in retryable_markers)
 
 
+def retry_delay_seconds(attempt: int) -> int:
+    return GEMINI_RETRY_DELAYS_SECONDS[min(attempt - 1, len(GEMINI_RETRY_DELAYS_SECONDS) - 1)]
+
+
+def is_retryable_empty_image_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    retryable_markers = [
+        "no image parts",
+        "no image bytes",
+        "image_other",
+    ]
+    return any(marker in message for marker in retryable_markers)
+
+
+def generate_content_once(
+    client: genai.Client,
+    *,
+    contents: list[types.Part | str],
+):
+    return client.models.generate_content(
+        model=MODEL_NAME,
+        contents=contents,
+        config=types.GenerateContentConfig(
+            response_modalities=["IMAGE"],
+            image_config=types.ImageConfig(
+                aspect_ratio="4:5",
+            ),
+        ),
+    )
+
+
 def generate_content_with_retry(
     client: genai.Client,
     *,
@@ -199,22 +230,13 @@ def generate_content_with_retry(
     for attempt in range(1, GEMINI_MAX_ATTEMPTS + 1):
         try:
             print(f"[RENDERER]: Gemini attempt {attempt}/{GEMINI_MAX_ATTEMPTS}...")
-            return client.models.generate_content(
-                model=MODEL_NAME,
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    response_modalities=["IMAGE"],
-                    image_config=types.ImageConfig(
-                        aspect_ratio="4:5",
-                    ),
-                ),
-            )
+            return generate_content_once(client, contents=contents)
         except Exception as exc:
             last_error = exc
             if attempt >= GEMINI_MAX_ATTEMPTS or not is_retryable_gemini_error(exc):
                 raise
 
-            delay = GEMINI_RETRY_DELAYS_SECONDS[min(attempt - 1, len(GEMINI_RETRY_DELAYS_SECONDS) - 1)]
+            delay = retry_delay_seconds(attempt)
             print(
                 "[RENDERER]: Gemini temporary error. "
                 f"Retrying in {delay}s. Error: {exc}"
@@ -225,6 +247,35 @@ def generate_content_with_retry(
         raise last_error
 
     raise RuntimeError("Gemini retry loop ended unexpectedly.")
+
+
+def generate_image_with_retry(
+    client: genai.Client,
+    *,
+    contents: list[types.Part | str],
+) -> Image.Image:
+    last_error: Exception | None = None
+
+    for attempt in range(1, GEMINI_MAX_ATTEMPTS + 1):
+        try:
+            response = generate_content_with_retry(client, contents=contents)
+            return extract_first_image(response)
+        except RuntimeError as exc:
+            last_error = exc
+            if attempt >= GEMINI_MAX_ATTEMPTS or not is_retryable_empty_image_error(exc):
+                raise
+
+            delay = retry_delay_seconds(attempt)
+            print(
+                "[RENDERER]: Gemini returned no image payload. "
+                f"Retrying in {delay}s. Error: {exc}"
+            )
+            time.sleep(delay)
+
+    if last_error is not None:
+        raise last_error
+
+    raise RuntimeError("Gemini image retry loop ended unexpectedly.")
 
 
 # =========================
@@ -298,14 +349,12 @@ def main() -> int:
     else:
         print("[RENDERER]: Sending prompt + reference to Gemini image model...")
 
-    response = generate_content_with_retry(client, contents=contents)
-
     try:
-        image = extract_first_image(response)
+        image = generate_image_with_retry(client, contents=contents)
     except RuntimeError:
         if PROFILE_IMAGE.exists() and ALLOW_PROMPT_ONLY_FALLBACK:
             print("[RENDERER]: Reference-based generation returned no image. Retrying prompt-only generation...")
-            fallback_response = generate_content_with_retry(
+            image = generate_image_with_retry(
                 client,
                 contents=[
                     base_instruction.replace("The provided image is", "Ezra Nex is")
@@ -313,7 +362,6 @@ def main() -> int:
                     prompt,
                 ],
             )
-            image = extract_first_image(fallback_response)
         else:
             raise
 
