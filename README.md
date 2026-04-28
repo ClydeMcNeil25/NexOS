@@ -1,135 +1,182 @@
 # Ezra Nex AI Agent
 
-Ezra Nex is an autonomous, state-driven AI content system designed to simulate a persistent digital persona.
+Ezra Nex is a local-first, state-driven AI content system built to operate as a persistent digital persona.
 
-Built as a modular multi-agent pipeline, Ezra generates cinematic visuals and controlled captions while maintaining continuity across identity, environment, and narrative progression.
+Ezra generates:
+- cinematic images
+- controlled captions
+- continuity-aware devlogs
+- system-driven day posts
 
-Rather than producing random content, Ezra operates as a structured system—tracking internal state, evolving over time, and expressing that evolution through subtle visual and textual outputs.
+The project is designed around long-running internal state, not one-off content generation. Ezra tracks system behavior, tension, post mode, and content type over time, then expresses that through visuals and captions.
 
-# Workflow (Brief Overview)
+## Current Stable Direction
 
-Ezra Nex operates through a multi-agent pipeline where each component is responsible for a specific stage of content generation.
+Ezra is currently running as a local-first system.
 
-## Ezra Nex System Workflow
+That means:
+- generation happens on the local machine
+- state and memory are stored locally
+- posting is triggered locally
+- Facebook publishing is direct
+- Make is no longer part of the active posting pipeline
+
+## Local Workflow
 
 ```text
-GitHub
-  ↓
-Railway deploys latest code
-  ↓
-Railway Cron triggers run_agent_auto.py
-  ↓
-run_agent_auto.py checks:
-  - time window
-  - duplicate posts
-  - lock file
-  ↓
+Core
+  ->
 Daily Visual Manager
-  - chooses or keeps daily outfit
-  - chooses allowed environments
-  ↓
-Core Agent
-  - chooses post mode
-  - chooses devlog state
-  - chooses content type
-  - generates Ezra signal
-  ↓
-Visual Agent
-  - turns signal into image prompt
-  - applies personality, environment, outfit, and content rules
-  ↓
+  ->
+Visual
+  ->
 Renderer
-  - generates image with Gemini
-  - uses Ezra reference image unless system_visual
-  - saves final 4:5 image
-  ↓
-Caption Agent
-  - writes final caption
-  - adds #devlog for devlog posts
-  ↓
-Webhook Delivery
-  - sends image, caption, and metadata to Make
-  ↓
-Make
-  - routes post to social platforms
+  ->
+Caption
+  ->
+Social Publishing
 ```
 
+## Manual Runner Phases
 
+`run_agent.bat` now executes Ezra in visible phases:
 
----
+1. Core Agent
+2. Visual Agent
+3. Rendering Visual
+4. Caption Agent
+5. Social Publishing
 
-Each cycle is state-driven, meaning every output is influenced by previous activity, system conditions, and long-term progression rather than isolated generation.
+This makes it easier to inspect failures quickly from CMD without guessing where the run stopped.
 
-# Devlog v0.89a
+## Social Posting
 
-# Devlog: Ezra Nex / NEX//THR Automation Milestone
+Ezra currently posts directly to the Facebook Pages API.
 
-Today marked a major systems milestone for Ezra Nex and the NEX//THR pipeline.
+Required local `.env` values:
 
-What started as a local multi-agent content workflow is now operating as a cloud-deployed autonomous system. The pipeline can generate a signal, produce a visual prompt, render an image, write a caption, and deliver the final post package through Make for social posting.
+```env
+ANTHROPIC_API_KEY=
+GEMINI_API_KEY=
+FACEBOOK_PAGE_ID=
+FACEBOOK_PAGE_ACCESS_TOKEN=
+```
 
-## What We Built
+Primary posting path:
+- `POST /{page-id}/photos`
 
-We moved Ezra from a local batch-script workflow into a Railway-hosted runtime connected to GitHub. The current pipeline now runs through:
+Fallback path:
+- `POST /{page-id}/feed`
 
-Core Agent -> Daily Visual Manager -> Visual Agent -> Renderer -> Caption Agent -> Webhook Delivery
+If posting fails:
+- the generated image remains saved locally
+- the final caption remains saved locally
+- the failure is logged clearly
 
-The system now supports:
+## Devlog Behavior
 
-- Cloud execution through Railway
-- GitHub-based version control and deployment
-- Make webhook delivery
-- Image + caption payload delivery
-- Daily visual continuity
-- Devlog and day-post scheduling logic
-- Controlled caption behavior
-- Identity-locked rendering for Ezra
-- Safety fallback behavior when the reference render fails
-- Structured personality and ideology rules
-- Early support for OS/UI-only NEX//THR system visuals
+Ezra supports structured devlog behavior centered around `NEX//THR`.
 
-## Key Milestones
+The current system can choose between:
+- `devlog_post`
+- `day_post`
+- `hybrid`
+- `system_visual`
+- `silent`
 
-The first major milestone was getting Ezra fully version-controlled through GitHub. Once the repository was connected, Railway could rebuild directly from pushed commits instead of relying on the local machine.
+Devlog captions are designed to feel like controlled build notes, not social-media commentary.
 
-The second milestone was getting Railway to run the automation wrapper correctly. The system now determines whether a post should run based on schedule windows, instead of needing manual local triggers.
+Typical devlog traits:
+- restrained tone
+- system-first language
+- minimal emotional expression
+- technical or observational phrasing
+- gradual tension progression
 
-The third milestone was Make integration. Ezra now sends the generated image, caption, metadata, and signal ID through a webhook. That payload successfully reached Make and was validated through a real social posting flow.
+When a post is a devlog, Ezra can append:
+- `#devlog`
 
-The fourth milestone was identity safety. We discovered that Gemini could occasionally fail when using Ezra’s character reference. Instead of allowing a prompt-only fallback that might generate the wrong person, we disabled that fallback for normal Ezra posts. If the identity-locked render fails, the system stops instead of posting an off-model Ezra.
+## Visual System
 
-The fifth milestone was personality expansion. Ezra’s ideology, behavior, environment rules, tension progression, caption logic, and post types were centralized into a dedicated personality layer. This gives the agents a stronger creative spine while keeping the output controlled and consistent.
+Ezra uses:
+- Gemini image generation
+- identity-locking with a reference image for Ezra-focused posts
+- UI-only rendering rules for `system_visual` posts
 
-The sixth milestone was adding real post-type logic. Ezra can now intentionally select between devlog posts, day posts, hybrid posts, silent posts, and system visual posts. This means NEX//THR can occasionally surface as UI fragments, logs, panels, node graphs, or graphical OS visuals instead of every image requiring Ezra in frame.
+Supported environment behavior includes:
+- `system_core`
+- `executive_hall`
+- `surveillance_room`
+- `data_vault`
+- `dark_lab`
+- `urban_exterior`
+- `isolated_cafe`
 
-## Missteps / Lessons
+Each environment shifts subtly based on:
+- post mode
+- devlog state
+- system tension stage
 
-The biggest early issue was assuming Railway would behave like the local machine. It did not. Environment variables, scheduled triggers, repo connection, and redeploy behavior all had to be clarified and tested.
+## Current Stability Notes
 
-Another issue was the Gemini renderer. We hit high-demand `503` errors and cases where Gemini returned no image parts. That led to retry/backoff handling and stricter failure behavior.
+This version includes:
+- direct Facebook posting
+- local-first execution
+- content-type selection
+- centralized Ezra personality rules
+- stronger renderer retry behavior for empty Gemini image responses
+- preserved local outputs on posting failure
 
-Make integration also had a few false starts. Sending image data as base64 was not enough for Facebook’s module. The solution was switching the webhook delivery to multipart file upload so Make could treat the image as an actual file buffer.
+Known operational reality:
+- Facebook Page access tokens can expire
+- Gemini can occasionally return temporary high-demand or empty-image responses
+- local execution is currently more reliable than cloud deployment for Ezra's workflow
 
-We also learned that giving Gemini the Ezra reference image during a UI-only system visual would conflict with the desired output. The renderer now skips the character reference only for `system_visual` posts.
+## Useful Local Commands
 
-## Current State
+Run full visible cycle:
 
-Ezra is no longer just generating isolated content.
+```cmd
+cd /d "C:\Users\MalyMal25\Documents\Claude\Ezra Nex"
+run_agent.bat
+```
 
-The system now has:
+Run full silent cycle:
 
-- Autonomy
-- Scheduling logic
-- Cloud deployment
-- Webhook delivery
-- Social posting integration
-- Memory and run history
-- Visual continuity
-- Personality rules
-- Post-type selection
-- Identity protection
-- NEX//THR system visual support
+```cmd
+cd /d "C:\Users\MalyMal25\Documents\Claude\Ezra Nex"
+run_agent_silent.bat
+```
 
-This is the first version that feels like a real autonomous content engine rather than a collection of scripts.
+Test only the social posting layer against the latest generated output:
 
-The next phase is refinement: improving post quality, tuning frequency, expanding NEX//THR visual language, and making Ezra’s system tension evolve more deliberately over time.
+```cmd
+cd /d "C:\Users\MalyMal25\Documents\Claude\Ezra Nex"
+python post_to_webhook.py
+```
+
+## Devlog Summary
+
+Recent milestones:
+- GitHub-backed version control stabilized
+- Ezra personality and ideology layer expanded
+- content-type logic added for devlogs, hybrids, silent posts, and system visuals
+- direct Facebook posting replaced the old webhook route
+- local phased runner updated to include a dedicated social publishing phase
+- renderer hardened against Gemini empty-image responses
+
+Recent lessons:
+- cloud deployment added too much friction for the current workflow
+- Facebook token expiration needs to be expected and managed
+- local-first execution provides clearer debugging and better operational control
+
+## Current Position
+
+Ezra is no longer just generating outputs.
+
+He now operates as a local, stateful content engine with:
+- persistent continuity
+- direct posting capability
+- structured devlog behavior
+- controlled system personality
+- a clear path toward a future dashboard-based local application

@@ -105,6 +105,17 @@ def log_failure_context(image_path: Path | None, caption: str) -> None:
     print(f"[FACEBOOK]: Caption preview -> {caption}")
 
 
+def log_response_details(prefix: str, response: requests.Response) -> None:
+    print(f"[FACEBOOK]: {prefix} status -> {response.status_code}")
+    try:
+        payload = response.json()
+        print(f"[FACEBOOK]: {prefix} response -> {json.dumps(payload)}")
+    except ValueError:
+        text = response.text.strip()
+        if text:
+            print(f"[FACEBOOK]: {prefix} response -> {text}")
+
+
 def main() -> int:
     page_id, page_access_token = load_environment()
     if not page_id or not page_access_token:
@@ -131,6 +142,8 @@ def main() -> int:
             response.raise_for_status()
         except requests.RequestException as exc:
             print(f"[FACEBOOK]: Text-only fallback post failed: {exc}")
+            if "response" in locals() and response is not None:
+                log_response_details("Text fallback", response)
             log_failure_context(None, caption)
             return 1
 
@@ -148,6 +161,8 @@ def main() -> int:
         response.raise_for_status()
     except requests.RequestException as exc:
         print(f"[FACEBOOK]: Photo post failed: {exc}")
+        if "response" in locals() and response is not None:
+            log_response_details("Photo post", response)
         try:
             fallback_response = post_text_fallback(
                 page_id=page_id,
@@ -157,6 +172,8 @@ def main() -> int:
             fallback_response.raise_for_status()
         except requests.RequestException as fallback_exc:
             print(f"[FACEBOOK]: Text-only fallback also failed: {fallback_exc}")
+            if "fallback_response" in locals() and fallback_response is not None:
+                log_response_details("Text fallback", fallback_response)
             log_failure_context(image_path, caption)
             return 1
 

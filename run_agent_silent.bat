@@ -18,5 +18,8 @@ if errorlevel 1 exit /b 1
 python run_caption.py
 if errorlevel 1 exit /b 1
 
+python post_to_webhook.py
+if errorlevel 1 exit /b 1
+
 echo [SYSTEM]: EZRA SILENT RUN COMPLETE
 exit /b 0

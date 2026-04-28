@@ -88,6 +88,12 @@ if not exist "run_caption.py" (
     exit /b 1
 )
 
+if not exist "post_to_webhook.py" (
+    echo [ERROR]: post_to_webhook.py not found!
+    pause
+    exit /b 1
+)
+
 echo [PHASE 1]: Running Core Agent...
 python run_core.py
 if errorlevel 1 (
@@ -116,6 +122,14 @@ echo [PHASE 4]: Running Caption Agent...
 python run_caption.py
 if errorlevel 1 (
     echo [ERROR]: Caption Agent failed.
+    pause
+    exit /b 1
+)
+
+echo [PHASE 5]: Running Social Publishing...
+python post_to_webhook.py
+if errorlevel 1 (
+    echo [ERROR]: Social Publishing failed.
     pause
     exit /b 1
 )
