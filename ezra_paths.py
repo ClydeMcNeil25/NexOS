@@ -17,7 +17,6 @@ RUN_HISTORY_FILE = DATA_DIR / "run_history.json"
 VISUAL_PROMPT_FILE = OUTPUT_DIR / "visual_prompt.txt"
 FINAL_CAPTION_FILE = OUTPUT_DIR / "final_caption.txt"
 STAGED_PROMPT_FILE = OUTPUT_DIR / "staged_prompt.txt"
-RENDER_DEBUG_FILE = OUTPUT_DIR / "render_debug.json"
 RENDER_MODE_FILE = OUTPUT_DIR / "render_mode.json"
 READY_TO_POST_FILE = OUTPUT_DIR / "ready_to_post.json"
 

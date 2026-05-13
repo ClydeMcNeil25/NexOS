@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(claude auth *)",
-      "Skill(update-config)",
-      "Bash(claude Core *)"
-    ]
-  }
-}

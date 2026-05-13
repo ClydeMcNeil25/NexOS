@@ -39,7 +39,7 @@ Social Publishing
 
 ## Manual Runner Phases
 
-`run_agent.bat` now executes Ezra in visible phases:
+`scripts/run_agent.bat` now executes Ezra in visible phases:
 
 1. Core Agent
 2. Visual Agent
@@ -81,6 +81,7 @@ Editable source files stay in the project root. Runtime state and generated outp
 - `output/` stores generated prompts, captions, render artifacts, and images
 - `output/images/` stores rendered images
 - `output/ready_to_post.json` stores the latest machine-readable posting handoff for automation tools like n8n
+- `scripts/` stores the local Windows launcher entrypoints
 
 ## Devlog Behavior
 
@@ -147,14 +148,14 @@ Run full visible cycle:
 
 ```cmd
 cd /d "D:\Dropbox\05 Software Development\Ezra Nex"
-run_agent.bat
+scripts\run_agent.bat
 ```
 
 Run full silent cycle:
 
 ```cmd
 cd /d "D:\Dropbox\05 Software Development\Ezra Nex"
-run_agent_silent.bat
+scripts\run_agent_silent.bat
 ```
 
 Test only the social posting layer against the latest generated output:

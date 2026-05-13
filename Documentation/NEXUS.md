@@ -1,5 +1,5 @@
 # 🌐 EZRA NEXUS (v3.1)
-**Project Root:** C:\Users\MalyMal25\Documents\Claude\Ezra Nex
+**Project Root:** D:\Dropbox\05 Software Development\Ezra Nex
 **Protocol:** Absolute Path Anchoring (v9.2)
 
 ---
@@ -18,4 +18,4 @@
 
 ## 📡 AUTOMATION BRIDGES
 - **Python Image Engine:** `render_visual.py`
-- **Orchestration:** `run_agent.bat`
+- **Orchestration:** `scripts/run_agent.bat`

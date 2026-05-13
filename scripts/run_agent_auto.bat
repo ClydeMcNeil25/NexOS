@@ -3,7 +3,7 @@ setlocal
 
 cls
 
-set "PROJECT_DIR=%~dp0"
+for %%I in ("%~dp0..") do set "PROJECT_DIR=%%~fI"
 cd /d "%PROJECT_DIR%"
 
 echo [AUTO]: INITIALIZING EZRA NEX AUTOMATION
@@ -16,8 +16,8 @@ if not exist "run_agent_auto.py" (
     exit /b 1
 )
 
-if not exist "run_agent.bat" (
-    echo [ERROR]: run_agent.bat not found!
+if not exist "scripts\\run_agent.bat" (
+    echo [ERROR]: scripts\\run_agent.bat not found!
     pause
     exit /b 1
 )
