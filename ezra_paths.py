@@ -19,6 +19,7 @@ FINAL_CAPTION_FILE = OUTPUT_DIR / "final_caption.txt"
 STAGED_PROMPT_FILE = OUTPUT_DIR / "staged_prompt.txt"
 RENDER_DEBUG_FILE = OUTPUT_DIR / "render_debug.json"
 RENDER_MODE_FILE = OUTPUT_DIR / "render_mode.json"
+READY_TO_POST_FILE = OUTPUT_DIR / "ready_to_post.json"
 
 
 def ensure_runtime_directories() -> None:

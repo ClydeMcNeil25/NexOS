@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 
 from anthropic_client import call_claude
-from ezra_paths import DAILY_CREATIVE_OVERRIDE_FILE, RUN_HISTORY_FILE
+from ezra_paths import (
+    DAILY_CREATIVE_OVERRIDE_FILE,
+    IMAGES_DIR,
+    READY_TO_POST_FILE,
+    RUN_HISTORY_FILE,
+)
 from ezra_utils import (
     CAPTION_SYSTEM_PROMPT_FILE,
     FINAL_CAPTION_FILE,
@@ -183,6 +189,47 @@ def add_devlog_hashtag_if_needed(caption: str, signal_context: dict) -> str:
     return f"{caption.rstrip()} #devlog"
 
 
+def latest_image():
+    if not IMAGES_DIR.exists():
+        return None
+
+    patterns = ("Ezra_*.png", "ezra_*.png")
+    images = []
+    for pattern in patterns:
+        images.extend(path for path in IMAGES_DIR.glob(pattern) if path.is_file())
+
+    if not images:
+        return None
+
+    return max(images, key=lambda path: path.stat().st_mtime)
+
+
+def write_ready_manifest(signal_id: str, signal_context: dict) -> None:
+    image_path = latest_image()
+    if image_path is None:
+        print("[CAPTION]: No rendered image found. Skipping ready_to_post manifest.")
+        return
+
+    manifest = {
+        "signal_id": signal_id,
+        "caption_path": str(FINAL_CAPTION_FILE.resolve()),
+        "image_path": str(image_path.resolve()),
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "platform": "facebook",
+        "status": "ready",
+    }
+
+    post_mode = str(signal_context.get("post_mode", "") or "").strip()
+    content_type = str(signal_context.get("content_type", "") or "").strip()
+
+    if post_mode:
+        manifest["post_mode"] = post_mode
+    if content_type:
+        manifest["content_type"] = content_type
+
+    write_text(READY_TO_POST_FILE, json.dumps(manifest, indent=2) + "\n")
+
+
 def build_user_prompt(
     state_text: str,
     memory_text: str,
@@ -272,6 +319,7 @@ def main() -> int:
     final_caption = parse_caption_response(raw_caption)
     final_caption = add_devlog_hashtag_if_needed(final_caption, signal_context)
     write_text(FINAL_CAPTION_FILE, final_caption + "\n")
+    write_ready_manifest(signal_id, signal_context)
 
     state_text = replace_field(state_text, "Current State", "IDLE")
     state_text = replace_field(state_text, "Last Update", timestamp_full())

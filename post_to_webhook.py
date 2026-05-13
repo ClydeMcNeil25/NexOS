@@ -8,7 +8,7 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
-from ezra_paths import IMAGES_DIR
+from ezra_paths import IMAGES_DIR, READY_TO_POST_FILE
 from ezra_utils import FINAL_CAPTION_FILE, MEMORY_FILE, STATE_FILE, extract_signal_id, read_text
 
 
@@ -57,6 +57,30 @@ def build_metadata(image_path: Path | None) -> dict[str, object]:
         metadata["image_size_bytes"] = image_path.stat().st_size
 
     return metadata
+
+
+def update_ready_manifest(*, status: str, image_path: Path | None, post_id: str = "") -> None:
+    if not READY_TO_POST_FILE.exists():
+        return
+
+    try:
+        payload = json.loads(READY_TO_POST_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        payload = {}
+
+    if not isinstance(payload, dict):
+        payload = {}
+
+    payload["status"] = status
+    payload["updated_at"] = datetime.now().isoformat(timespec="seconds")
+
+    if image_path is not None:
+        payload["image_path"] = str(image_path.resolve())
+
+    if post_id:
+        payload["post_id"] = post_id
+
+    READY_TO_POST_FILE.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
 def post_photo(
@@ -148,10 +172,12 @@ def main() -> int:
             print(f"[FACEBOOK]: Text-only fallback post failed: {exc}")
             if "response" in locals() and response is not None:
                 log_response_details("Text fallback", response)
+            update_ready_manifest(status="failed", image_path=None)
             log_failure_context(None, caption)
             return 1
 
         payload = response.json()
+        update_ready_manifest(status="posted", image_path=None, post_id=str(payload.get("id", "")))
         print(f"[FACEBOOK]: Text-only post published successfully. Post ID -> {payload.get('id', 'UNKNOWN')}")
         return 0
 
@@ -178,10 +204,16 @@ def main() -> int:
             print(f"[FACEBOOK]: Text-only fallback also failed: {fallback_exc}")
             if "fallback_response" in locals() and fallback_response is not None:
                 log_response_details("Text fallback", fallback_response)
+            update_ready_manifest(status="failed", image_path=image_path)
             log_failure_context(image_path, caption)
             return 1
 
         fallback_payload = fallback_response.json()
+        update_ready_manifest(
+            status="posted",
+            image_path=image_path,
+            post_id=str(fallback_payload.get("id", "")),
+        )
         print(
             "[FACEBOOK]: Photo upload failed, but text-only fallback succeeded. "
             f"Post ID -> {fallback_payload.get('id', 'UNKNOWN')}"
@@ -190,6 +222,11 @@ def main() -> int:
         return 0
 
     payload = response.json()
+    update_ready_manifest(
+        status="posted",
+        image_path=image_path,
+        post_id=str(payload.get("post_id") or payload.get("id", "")),
+    )
     print(
         "[FACEBOOK]: Photo post published successfully. "
         f"Post ID -> {payload.get('post_id') or payload.get('id', 'UNKNOWN')}"

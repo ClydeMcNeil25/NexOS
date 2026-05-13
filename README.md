@@ -80,6 +80,7 @@ Editable source files stay in the project root. Runtime state and generated outp
 - `data/` stores persistent state and automation history
 - `output/` stores generated prompts, captions, render artifacts, and images
 - `output/images/` stores rendered images
+- `output/ready_to_post.json` stores the latest machine-readable posting handoff for automation tools like n8n
 
 ## Devlog Behavior
 
