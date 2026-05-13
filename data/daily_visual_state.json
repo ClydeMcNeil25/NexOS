@@ -1,0 +1,13 @@
+{
+  "date": "2026-04-27",
+  "theme": "infrastructure_day",
+  "outfit_id": "infra_black_001",
+  "outfit_description": "tailored black high-collar coat, dark charcoal inner layer, minimal structured silhouette, matte textures, no bright colors",
+  "primary_environment": "data_vault",
+  "allowed_environments": [
+    "data_vault",
+    "dark_lab",
+    "system_core",
+    "surveillance_room"
+  ]
+}

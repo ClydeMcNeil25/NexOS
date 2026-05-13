@@ -3,11 +3,8 @@ from __future__ import annotations
 import json
 import random
 from datetime import datetime
-from pathlib import Path
 
-
-ROOT_DIR = Path(__file__).resolve().parent
-DAILY_VISUAL_STATE_FILE = ROOT_DIR / "daily_visual_state.json"
+from ezra_paths import DAILY_VISUAL_STATE_FILE, ensure_runtime_directories
 
 
 TODAY_POOLS = [
@@ -71,6 +68,7 @@ def load_existing() -> dict:
 
 
 def save_state(state: dict) -> None:
+    ensure_runtime_directories()
     DAILY_VISUAL_STATE_FILE.write_text(
         json.dumps(state, indent=2),
         encoding="utf-8",

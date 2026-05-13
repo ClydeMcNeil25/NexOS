@@ -73,6 +73,14 @@ If posting fails:
 - the final caption remains saved locally
 - the failure is logged clearly
 
+## Project Layout
+
+Editable source files stay in the project root. Runtime state and generated outputs are separated:
+
+- `data/` stores persistent state and automation history
+- `output/` stores generated prompts, captions, render artifacts, and images
+- `output/images/` stores rendered images
+
 ## Devlog Behavior
 
 Ezra supports structured devlog behavior centered around `NEX//THR`.
@@ -137,21 +145,21 @@ Known operational reality:
 Run full visible cycle:
 
 ```cmd
-cd /d "C:\Users\MalyMal25\Documents\Claude\Ezra Nex"
+cd /d "D:\Dropbox\05 Software Development\Ezra Nex"
 run_agent.bat
 ```
 
 Run full silent cycle:
 
 ```cmd
-cd /d "C:\Users\MalyMal25\Documents\Claude\Ezra Nex"
+cd /d "D:\Dropbox\05 Software Development\Ezra Nex"
 run_agent_silent.bat
 ```
 
 Test only the social posting layer against the latest generated output:
 
 ```cmd
-cd /d "C:\Users\MalyMal25\Documents\Claude\Ezra Nex"
+cd /d "D:\Dropbox\05 Software Development\Ezra Nex"
 python post_to_webhook.py
 ```
 

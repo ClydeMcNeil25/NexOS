@@ -7,9 +7,10 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from ezra_paths import DAILY_CREATIVE_OVERRIDE_FILE, RUN_HISTORY_FILE, ensure_runtime_directories
+
 
 ROOT_DIR = Path(__file__).resolve().parent
-RUN_HISTORY_FILE = ROOT_DIR / "run_history.json"
 LOCK_FILE = ROOT_DIR / "ezra_auto.lock"
 
 MORNING_POST_START_HOUR = 9
@@ -39,6 +40,7 @@ def load_json(path: Path, default):
 
 
 def save_json(path: Path, data) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
@@ -185,8 +187,6 @@ def determine_desired_post_mode(current_dt: datetime) -> tuple[str, str] | None:
 
 
 def update_override(post_mode: str) -> None:
-    override_path = ROOT_DIR / "daily_creative_override.json"
-
     default = {
         "enabled": False,
         "post_mode": "",
@@ -194,7 +194,7 @@ def update_override(post_mode: str) -> None:
         "caption_override": "",
     }
 
-    data = load_json(override_path, default)
+    data = load_json(DAILY_CREATIVE_OVERRIDE_FILE, default)
     if not isinstance(data, dict):
         data = default.copy()
 
@@ -203,18 +203,17 @@ def update_override(post_mode: str) -> None:
     data["visual_override"] = str(data.get("visual_override", "") or "")
     data["caption_override"] = str(data.get("caption_override", "") or "")
 
-    save_json(override_path, data)
+    save_json(DAILY_CREATIVE_OVERRIDE_FILE, data)
 
 
 def reset_override() -> None:
-    override_path = ROOT_DIR / "daily_creative_override.json"
     data = {
         "enabled": False,
         "post_mode": "",
         "visual_override": "",
         "caption_override": ""
     }
-    save_json(override_path, data)
+    save_json(DAILY_CREATIVE_OVERRIDE_FILE, data)
 
 
 def append_automation_log(
@@ -242,12 +241,12 @@ def append_automation_log(
     save_run_history(data)
 
 
-def run_step(label: str, script_name: str) -> int:
+def run_step(phase_number: int, total_phases: int, label: str, script_name: str) -> int:
     script_path = ROOT_DIR / script_name
     if not script_path.exists():
         raise FileNotFoundError(f"Missing pipeline step: {script_path}")
 
-    print(f"[AUTO]: Running {label}...")
+    print(f"[PHASE {phase_number}/{total_phases}]: Running {label}...")
     result = subprocess.run(
         [sys.executable, str(script_path)],
         cwd=str(ROOT_DIR),
@@ -257,8 +256,9 @@ def run_step(label: str, script_name: str) -> int:
 
 
 def run_pipeline() -> int:
-    for label, script_name in PIPELINE_STEPS:
-        code = run_step(label, script_name)
+    total_phases = len(PIPELINE_STEPS)
+    for index, (label, script_name) in enumerate(PIPELINE_STEPS, start=1):
+        code = run_step(index, total_phases, label, script_name)
         if code != 0:
             print(f"[AUTO]: {label} failed with exit code {code}.")
             return code
@@ -267,6 +267,8 @@ def run_pipeline() -> int:
 
 def main() -> int:
     print("[AUTO]: Ezra automation wrapper starting...")
+    print("[AUTO]: Pipeline order -> Core / Visual / Renderer / Caption / Publishing")
+    ensure_runtime_directories()
 
     if is_locked():
         print("[AUTO]: Existing active lock detected. Aborting.")

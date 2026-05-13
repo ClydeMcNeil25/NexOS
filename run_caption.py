@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 from anthropic_client import call_claude
+from ezra_paths import DAILY_CREATIVE_OVERRIDE_FILE, RUN_HISTORY_FILE
 from ezra_utils import (
     CAPTION_SYSTEM_PROMPT_FILE,
     FINAL_CAPTION_FILE,
@@ -22,11 +22,7 @@ from ezra_utils import (
     timestamp_time,
     write_text,
 )
-
-
-ROOT_DIR = Path(__file__).resolve().parent
-CREATIVE_OVERRIDE_FILE = ROOT_DIR / "daily_creative_override.json"
-RUN_HISTORY_FILE = ROOT_DIR / "run_history.json"
+CREATIVE_OVERRIDE_FILE = DAILY_CREATIVE_OVERRIDE_FILE
 
 
 def load_json(path: Path, default):

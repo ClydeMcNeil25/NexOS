@@ -4,12 +4,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parent
-
-STATE_FILE = ROOT_DIR / "agent_state.md"
-MEMORY_FILE = ROOT_DIR / "EN_MEM.txt"
-VISUAL_PROMPT_FILE = ROOT_DIR / "visual_prompt.txt"
-FINAL_CAPTION_FILE = ROOT_DIR / "final_caption.txt"
+from ezra_paths import FINAL_CAPTION_FILE, MEMORY_FILE, ROOT_DIR, STATE_FILE, VISUAL_PROMPT_FILE
 CORE_PROMPT_FILE = ROOT_DIR / "core_system_prompt.txt"
 VISUAL_SYSTEM_PROMPT_FILE = ROOT_DIR / "visual_system_prompt.txt"
 CAPTION_SYSTEM_PROMPT_FILE = ROOT_DIR / "caption_system_prompt.txt"
@@ -42,10 +37,12 @@ def read_text(path: Path) -> str:
 
 
 def write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
 
 
 def append_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:
         f.write(content)
 

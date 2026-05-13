@@ -3,9 +3,9 @@
 import json
 import random
 from datetime import datetime
-from pathlib import Path
 
 from anthropic_client import call_claude
+from ezra_paths import DAILY_CREATIVE_OVERRIDE_FILE, RUN_HISTORY_FILE, STAGED_PROMPT_FILE
 from ezra_utils import (
     CORE_PROMPT_FILE,
     MEMORY_FILE,
@@ -22,9 +22,7 @@ from ezra_utils import (
     write_text,
 )
 
-ROOT_DIR = Path(__file__).resolve().parent
-RUN_HISTORY_FILE = ROOT_DIR / "run_history.json"
-DAILY_OVERRIDE_FILE = ROOT_DIR / "daily_creative_override.json"
+DAILY_OVERRIDE_FILE = DAILY_CREATIVE_OVERRIDE_FILE
 
 DEVLOG_WEIGHTS = {
     "progression": 70,
@@ -437,7 +435,7 @@ def write_visual_prompt(
     content_type: str,
     tension_stage: int,
 ) -> None:
-    visual_prompt_file = ROOT_DIR / "staged_prompt.txt"
+    visual_prompt_file = STAGED_PROMPT_FILE
 
     mode_line = f"POST_MODE: {post_mode}"
     devlog_line = f"DEVLOG_STATE: {devlog_state}" if devlog_state else "DEVLOG_STATE: NONE"

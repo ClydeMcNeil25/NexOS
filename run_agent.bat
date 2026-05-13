@@ -16,14 +16,14 @@ if not exist ".env" (
     exit /b 1
 )
 
-if not exist "agent_state.md" (
-    echo [ERROR]: agent_state.md not found!
+if not exist "data\\agent_state.md" (
+    echo [ERROR]: data\\agent_state.md not found!
     pause
     exit /b 1
 )
 
-if not exist "EN_MEM.txt" (
-    echo [ERROR]: EN_MEM.txt not found!
+if not exist "data\\EN_MEM.txt" (
+    echo [ERROR]: data\\EN_MEM.txt not found!
     pause
     exit /b 1
 )
@@ -46,20 +46,20 @@ if not exist "caption_system_prompt.txt" (
     exit /b 1
 )
 
-if not exist "daily_creative_override.json" (
-    echo [ERROR]: daily_creative_override.json not found!
+if not exist "data\\daily_creative_override.json" (
+    echo [ERROR]: data\\daily_creative_override.json not found!
     pause
     exit /b 1
 )
 
-if not exist "daily_visual_state.json" (
-    echo [ERROR]: daily_visual_state.json not found!
+if not exist "data\\daily_visual_state.json" (
+    echo [ERROR]: data\\daily_visual_state.json not found!
     pause
     exit /b 1
 )
 
-if not exist "run_history.json" (
-    echo [ERROR]: run_history.json not found!
+if not exist "data\\run_history.json" (
+    echo [ERROR]: data\\run_history.json not found!
     pause
     exit /b 1
 )

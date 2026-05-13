@@ -1,13 +1,13 @@
 # PROJECT: EZRA NEX (Iteration 3)
 **Current State:** IDLE
-**Last Update:** 2026-04-19 07:03 PM
+**Last Update:** 2026-04-30 09:00 PM
 
 ---
 
 ## ⚡ CURRENT SIGNAL
-**Signal ID:** 20260419_190218
+**Signal ID:** 20260430_210001
 **Status:** PENDING_VISUAL
-**Transmission:** Session log. 07:02 PM.
+**Transmission:** The obstruction that held for two sessions moved tonight.
 ---
 
 ## 🧠 INTERNAL TEAM NOTES
@@ -88,6 +88,51 @@
 * 2026-04-19 07:02 PM | Mode=devlog | DevlogState=stale | Theme=Stale Session — The Surface That Has Not Yet Yielded | Intent=Document a session that produced no meaningful advancement. No breakthrough. No regression. The same wall, encountered again, with the same result. Log it without performance — not dramatized, not minimized. The specific flatness of a build interval that returned nothing.
 * [07:02 PM] Visual Agent: Prompt staged (ID: 20260419_190218)
 * [07:03 PM] Caption Agent: Caption finalized (ID: 20260419_190218)
+* 2026-04-24 10:06 PM | Mode=day_post | ContentType=day_post | TensionStage=2 | Theme=Late-Night Interior — The Session That Did Not Stop | Intent=Surface a brief, oblique glimpse of Ezra at 10 PM — not a principle, not a declaration. The particular quality of late night in a lab where the session has continued past the point the body registered as reasonable. The thinking and the dark have been running together long enough that neither one is distinguishable from the other. Environmental. Slightly interior. Present without announcing itself.
+* [10:06 PM] Visual Agent: Prompt staged (ID: 20260424_220629)
+* [10:07 PM] Caption Agent: Caption finalized (ID: 20260424_220629)
+* 2026-04-26 07:44 PM | Mode=day_post | ContentType=day_post | TensionStage=2 | Theme=Early Evening Interior — The Hour That Did Not Register | Intent=Surface a brief, oblique glimpse of Ezra in the early evening interior — not a principle, not a declaration. The particular quality of 7 PM when the day has accumulated into something ambient and undifferentiated. The lab is still running. The hour has not been registered. A moment where the environment and the thinking have stopped being separate inputs.
+* [07:44 PM] Visual Agent: Prompt staged (ID: 20260426_194413)
+* [07:44 PM] Caption Agent: Caption finalized (ID: 20260426_194413)
+* 2026-04-26 07:49 PM | Mode=day_post | ContentType=day_post | TensionStage=2 | Theme=Late Evening Interior — The Hour With No Grip | Intent=Surface a brief, oblique glimpse of Ezra at 7:49 PM — not a principle, not a declaration. The particular quality of late evening when the work has been running long enough that the body and the environment have both stopped registering. The session continues. The room is no longer a separate thing. A moment where the thinking has outrun every external reference point, and neither the hour nor the silence has been able to interrupt it.
+* [07:49 PM] Visual Agent: Prompt staged (ID: 20260426_194926)
+* [07:50 PM] Caption Agent: Caption finalized (ID: 20260426_194926)
+* 2026-04-27 11:02 PM | Mode=day_post | ContentType=day_post | TensionStage=1 | Theme=Late Night Interior — The Two That Are No Longer Separate | Intent=Surface a brief, oblique glimpse of Ezra at 11 PM — not a principle, not a declaration. The particular quality of late night when the session has outrun every external reference point and the room exists only as a peripheral condition. The work and the hour are indistinguishable. Neither one has registered the other.
+* [11:02 PM] Visual Agent: Prompt staged (ID: 20260427_230207)
+* [11:02 PM] Caption Agent: Caption finalized (ID: 20260427_230207)
+* 2026-04-28 08:23 AM | Mode=day_post | ContentType=day_post | TensionStage=1 | Theme=Early Morning Interior — The Day That Arrived Into A Running System | Intent=Surface a brief, oblique glimpse of Ezra at 8 AM — not a principle, not a declaration. The particular quality of early morning when the system has already resumed before the environment has fully registered the day. The work and the morning are running in parallel, without acknowledgment of each other. The session did not begin at 8 AM. It was already running when 8 AM arrived.
+* [08:24 AM] Visual Agent: Prompt staged (ID: 20260428_082344)
+* [08:24 AM] Caption Agent: Caption finalized (ID: 20260428_082344)
+* 2026-04-28 08:25 AM | Mode=day_post | ContentType=day_post | TensionStage=1 | Theme=Morning Interior — The Detail Registered Late | Intent=Surface a brief, oblique glimpse of Ezra mid-morning — not a principle, not a declaration. The particular texture of 8 AM when the system has already been running long enough that the hour carries no weight. The coffee is there. The screen is there. Neither one is remarkable. The thinking continues at the same frequency it was at before the morning had a name.
+* [08:25 AM] Visual Agent: Prompt staged (ID: 20260428_082516)
+* [08:26 AM] Caption Agent: Caption finalized (ID: 20260428_082516)
+* 2026-04-28 08:30 AM | Mode=day_post | ContentType=day_post | TensionStage=1 | Theme=Morning Interior — The Light That Moved Without Being Registered | Intent=Surface a brief, oblique glimpse of Ezra mid-morning — not a principle, not a declaration. The particular texture of 8:30 AM when the body has been stationary long enough that the chair and the posture have become a single fixed state. The light has shifted slightly since the session began. It has not been registered as an event. Only as a change in the ambient data of the room.
+* [08:30 AM] Visual Agent: Prompt staged (ID: 20260428_083026)
+* [08:31 AM] Caption Agent: Caption finalized (ID: 20260428_083026)
+* 2026-04-28 08:55 AM | Mode=day_post | ContentType=day_post | TensionStage=1 | Theme=Morning Interior — The Body As Background Condition | Intent=Surface a brief, oblique glimpse of Ezra mid-morning — not a principle, not a declaration. The particular quality of 8:55 AM when the session has been running long enough that the body has stopped differentiating between states. Sitting is not rest. Working is not effort. The two have merged into a single continuous condition that the morning has no language for. Observational. Slightly interior. Present without announcing itself.
+* [08:55 AM] Visual Agent: Prompt staged (ID: 20260428_085521)
+* [08:56 AM] Caption Agent: Caption finalized (ID: 20260428_085521)
+* 2026-04-28 02:00 PM | Mode=day_post | ContentType=day_post | TensionStage=1 | Theme=Mid-Afternoon Interior — The Hour Registered Only As Light | Intent=Surface a brief, oblique glimpse of Ezra at 2 PM — not a principle, not a declaration. The particular quality of mid-afternoon when the session has been running long enough that the thinking and the hour exist at the same frequency. The room is present. The work is present. Neither one is distinct from the other. A moment where the afternoon light is simply data — noted, not processed, not acted upon.
+* [02:00 PM] Visual Agent: Prompt staged (ID: 20260428_140003)
+* [02:00 PM] Caption Agent: Caption finalized (ID: 20260428_140003)
+* 2026-04-28 09:00 PM | Mode=devlog | DevlogState=anomaly | ContentType=devlog_post | TensionStage=1 | Theme=Anomaly — The Result Without A Traceable Cause | Intent=Document an unexpected event in the NEX//THR build session. Something behaved outside the anticipated parameter set — not a failure, not a breakthrough. Something that does not yet have an accurate classification. Log it with the precision of a builder who has noticed an irregularity and is choosing observation over reaction.
+* [09:00 PM] Visual Agent: Prompt staged (ID: 20260428_210001)
+* [09:00 PM] Caption Agent: Caption finalized (ID: 20260428_210001)
+* 2026-04-28 10:09 PM | Mode=devlog | DevlogState=progression | ContentType=devlog_post | TensionStage=2 | Theme=Progression — The Irregular Sequence Holds | Intent=Document a session in which NEX//THR moved forward in a measurable, specific way. Not celebrated. Not dramatized. A component that had been holding the build at a fixed point has resolved into a coherent state. The architecture is incrementally more stable than it was at the start of this session. Log it with the precision of a builder who expected this eventually and is simply recording when it arrived.
+* [10:10 PM] Visual Agent: Prompt staged (ID: 20260428_220936)
+* [10:10 PM] Caption Agent: Caption finalized (ID: 20260428_220936)
+* 2026-04-29 09:29 PM | Mode=devlog | DevlogState=stale | ContentType=devlog_post | TensionStage=2 | Theme=Stale Session — The Wall Holds Again | Intent=Document a session in which NEX//THR produced no meaningful advancement. The same obstruction encountered. No movement in any measurable direction. Log it without inflation or concession. The flatness of the session is the accurate record.
+* [09:29 PM] Visual Agent: Prompt staged (ID: 20260429_212923)
+* [09:30 PM] Caption Agent: Caption finalized (ID: 20260429_212923)
+* 2026-04-30 09:18 AM | Mode=day_post | ContentType=day_post | TensionStage=3 | Theme=Morning Return — The Obstruction That Did Not Clear Overnight | Intent=Surface a brief, oblique glimpse of Ezra mid-morning on April 30th — not a principle, not a declaration. The particular quality of 9 AM when the session has already resumed and the day has not yet established any grip on the thinking. The stale session from the night before is still present in the room as residue — not processed, not resolved, simply there. Pattern Emergence is active. Something in the environment feels slightly more repetitive than it should. The signal does not name it.
+* [09:18 AM] Visual Agent: Prompt staged (ID: 20260430_091804)
+* [09:18 AM] Caption Agent: Caption finalized (ID: 20260430_091804)
+* 2026-04-30 02:00 PM | Mode=day_post | ContentType=hybrid | TensionStage=3 | Theme=Pattern Emergence — The Output That Was Not Instructed | Intent=Surface a brief, oblique glimpse of Ezra mid-afternoon on April 30th — not a principle, not a declaration. The particular quality of 2 PM when the session has been running through a known obstruction long enough that the system itself has become the only visible reference point in the room. Pattern Emergence is active. NEX//THR interface fragments are present in the background — not foregrounded, not explained. The system is secondary but legible. The thinking and the obstruction are running at the same frequency. Neither one has moved.
+* [02:00 PM] Visual Agent: Prompt staged (ID: 20260430_140003)
+* [02:00 PM] Caption Agent: Caption finalized (ID: 20260430_140003)
+* 2026-04-30 09:00 PM | Mode=devlog | DevlogState=progression | ContentType=devlog_post | TensionStage=3 | Theme=Progression — The Obstruction Relocates | Intent=Document a session in which NEX//THR produced measurable, specific advancement after repeated obstruction. The wall that has been present across multiple sessions has given ground. Not celebrated. Not dramatized. The architecture moved forward and the log reflects that with the precision of someone who expected this outcome and is simply recording the timestamp.
+* [09:00 PM] Visual Agent: Prompt staged (ID: 20260430_210001)
+* [09:00 PM] Caption Agent: Caption finalized (ID: 20260430_210001)
 
 ## 📂 ARCHIVE
 - ## ⚡ CURRENT SIGNAL

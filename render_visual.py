@@ -15,13 +15,13 @@ from google.genai import errors
 from google.genai import types
 from PIL import Image
 
+from ezra_paths import IMAGES_DIR, RENDER_MODE_FILE, VISUAL_PROMPT_FILE, ensure_runtime_directories
+
 
 ROOT_DIR = Path(__file__).resolve().parent
 ENV_FILE = ROOT_DIR / ".env"
-PROMPT_FILE = ROOT_DIR / "visual_prompt.txt"
-IMAGES_DIR = ROOT_DIR / "Images"
 PROFILE_IMAGE = ROOT_DIR / "Ezra Nex - Character Profile Sheet.png"
-RENDER_MODE_FILE = ROOT_DIR / "render_mode.json"
+PROMPT_FILE = VISUAL_PROMPT_FILE
 
 MODEL_NAME = "gemini-2.5-flash-image"
 
@@ -283,6 +283,7 @@ def generate_image_with_retry(
 # =========================
 
 def main() -> int:
+    ensure_runtime_directories()
     api_key = get_api_key()
 
     print(f"[RENDERER]: Looking for prompt in {PROMPT_FILE}...")

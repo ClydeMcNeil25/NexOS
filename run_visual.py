@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import json
 import random
-from pathlib import Path
 
 from anthropic_client import call_claude
+from ezra_paths import (
+    DAILY_CREATIVE_OVERRIDE_FILE,
+    DAILY_VISUAL_STATE_FILE,
+    RENDER_MODE_FILE,
+    RUN_HISTORY_FILE,
+)
 from ezra_utils import (
     MEMORY_FILE,
     PERSONALITY_FILE,
@@ -22,13 +27,7 @@ from ezra_utils import (
     timestamp_time,
     write_text,
 )
-
-
-ROOT_DIR = Path(__file__).resolve().parent
-DAILY_VISUAL_STATE_FILE = ROOT_DIR / "daily_visual_state.json"
-CREATIVE_OVERRIDE_FILE = ROOT_DIR / "daily_creative_override.json"
-RUN_HISTORY_FILE = ROOT_DIR / "run_history.json"
-RENDER_MODE_FILE = ROOT_DIR / "render_mode.json"
+CREATIVE_OVERRIDE_FILE = DAILY_CREATIVE_OVERRIDE_FILE
 
 
 def load_json(path: Path, default):

@@ -8,12 +8,12 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+from ezra_paths import IMAGES_DIR
 from ezra_utils import FINAL_CAPTION_FILE, MEMORY_FILE, STATE_FILE, extract_signal_id, read_text
 
 
 ROOT_DIR = Path(__file__).resolve().parent
 ENV_FILE = ROOT_DIR / ".env"
-IMAGES_DIR = ROOT_DIR / "Images"
 GRAPH_API_BASE = "https://graph.facebook.com/v24.0"
 FACEBOOK_TIMEOUT_SECONDS = 60
 
@@ -29,7 +29,11 @@ def latest_image() -> Path | None:
     if not IMAGES_DIR.exists():
         return None
 
-    images = [path for path in IMAGES_DIR.glob("*.png") if path.is_file()]
+    patterns = ("Ezra_*.png", "ezra_*.png")
+    images: list[Path] = []
+    for pattern in patterns:
+        images.extend(path for path in IMAGES_DIR.glob(pattern) if path.is_file())
+
     if not images:
         return None
 
